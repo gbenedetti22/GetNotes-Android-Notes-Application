@@ -16,7 +16,6 @@ import java.util.ArrayList;
 
 public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.ViewHolder> {
     private static final String TAG = "IconsViewAdapter";
-    private ArrayList<HomeIcon> homeIcons = new ArrayList<>();
     private Cursor cursor;
 
     public interface IconTouchListener {
@@ -105,15 +104,15 @@ public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.View
             this.itemView = itemView;
         }
 
-        private void setAsFolder() {
+        public void setAsFolder() {
             label = itemView.findViewById(R.id.folder_label);
         }
 
-        private void setAsNote() {
+        public void setAsNote() {
             label = itemView.findViewById(R.id.note_label);
         }
 
-        private void setText(String name) {
+        public void setText(String name) {
             label.setText(name);
             this.name = name;
         }
@@ -136,6 +135,14 @@ public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.View
 
         public void setId(int id) {
             this.id = id;
+        }
+
+        public void setType(int type) {
+            this.type = type;
+        }
+
+        public void setParentFolder(int parent_folder) {
+            this.parent_folder = parent_folder;
         }
 
         public void setOnClickListener(View.OnClickListener listener) {

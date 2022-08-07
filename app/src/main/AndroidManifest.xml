@@ -16,6 +16,23 @@
         android:theme="@style/Theme.GetNotes"
         tools:targetApi="31">
         <activity
+            android:name=".groups.ViewGroupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".groups.OnlineGroupsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateUserActivity"
+            android:exported="false" />
+        <activity
+            android:name=".groups.CreateGroupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".groups.GroupsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_groups"
+            android:theme="@style/Theme.GetNotes.NoActionBar" />
+        <activity
             android:name=".note.NoteActivity"
             android:exported="false" />
         <activity

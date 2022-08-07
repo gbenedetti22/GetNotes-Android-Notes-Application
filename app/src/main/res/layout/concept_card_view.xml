@@ -13,22 +13,21 @@
         android:layout_margin="10dp">
 
         <ImageView
-            android:id="@+id/folder_image"
+            android:id="@+id/note_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:contentDescription="folder"
-            android:src="@drawable/folder_icon" />
+            android:src="@drawable/concept_icon" />
 
         <TextView
-            android:id="@+id/folder_label"
-            android:layout_below="@+id/folder_image"
+            android:id="@+id/concept_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_below="@+id/note_image"
             android:layout_centerHorizontal="true"
-            android:textColor="@color/black"
-            android:text="Reti" />
+            android:gravity="center"
+            android:text="2 Guerra Mondiale"
+            android:textColor="@color/black" />
 
     </RelativeLayout>
 

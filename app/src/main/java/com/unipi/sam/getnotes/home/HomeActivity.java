@@ -2,6 +2,7 @@ package com.unipi.sam.getnotes.home;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,12 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.unipi.sam.getnotes.LocalDatabase;
+import com.unipi.sam.getnotes.groups.GroupsActivity;
 import com.unipi.sam.getnotes.note.NoteActivity;
 import com.unipi.sam.getnotes.R;
 
 import java.util.LinkedList;
 
-public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.IconTouchListener{
+public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.IconTouchListener {
     private boolean isFabMenuOpened = false;
     private final LocalDatabase database = new LocalDatabase(this);
     private final IconsViewAdapter viewAdapter = new IconsViewAdapter(this);
@@ -58,7 +60,9 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                 icon.setOnClickListener(v -> {
                     Intent intent = new Intent(this, NoteActivity.class);
                     intent.putExtra("id", icon.getId());
+                    intent.putExtra("name", "pippo");
                     startActivity(intent);
+                    finish();
                 });
                 break;
         }
@@ -92,10 +96,12 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                 int position = database.addNote("pippo");
                 viewAdapter.setCursor(database.getFiles());
                 viewAdapter.notifyItemInserted(position);
+                closeFloatingActionMenu();
                 Intent intent = new Intent(this, NoteActivity.class);
                 intent.putExtra("id", position);
+                intent.putExtra("name", "pippo");
                 startActivity(intent);
-                closeFloatingActionMenu();
+                finish();
             } catch (Exception e1) {
                 Toast.makeText(HomeActivity.this, "Impossibile creare una nuova nota", Toast.LENGTH_SHORT).show();
             }
@@ -110,6 +116,12 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                 Toast.makeText(HomeActivity.this, "Impossibile creare una nuova cartella", Toast.LENGTH_SHORT).show();
             }
             closeFloatingActionMenu();
+        });
+
+        networkFab.setOnClickListener( e -> {
+            closeFloatingActionMenu();
+            Intent intent = new Intent(this, GroupsActivity.class);
+            startActivity(intent);
         });
     }
 

@@ -9,6 +9,7 @@
         <entry key="app/src/main/res/drawable/add_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/add_page_icon.xml" value="0.26" />
         <entry key="app/src/main/res/drawable/circle.xml" value="0.259" />
+        <entry key="app/src/main/res/drawable/concept_icon.xml" value="0.26" />
         <entry key="app/src/main/res/drawable/eraser_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/folder_icon.xml" value="0.105" />
         <entry key="app/src/main/res/drawable/hand_cursor_icon.xml" value="0.26" />
@@ -22,16 +23,27 @@
         <entry key="app/src/main/res/drawable/text_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/undo.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/undo_icon.xml" value="0.259" />
-        <entry key="app/src/main/res/layout/activity_home.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_create_group.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_create_user.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_groups.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_home.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/activity_note.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_online_groups.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout/activity_share.xml" value="0.3394871794871795" />
+        <entry key="app/src/main/res/layout/activity_view_group.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout/concept_card_view.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/content_home.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/folder_card_view.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_blackboard.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/note_card_view.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/group_card_view.xml" value="0.34375" />
+        <entry key="app/src/main/res/layout/layout_card_view.xml" value="0.34375" />
+        <entry key="app/src/main/res/layout/note_card_view.xml" value="0.33" />
         <entry key="app/src/main/res/layout/note_icon.xml" value="0.3302083333333333" />
         <entry key="app/src/main/res/layout/shape_colored_circle.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout/share_dialog.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/stylus_settings_dialog.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/treeview_concept_layout.xml" value="0.33" />
       </map>
     </option>
   </component>

@@ -9,6 +9,8 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.unipi.sam.getnotes.table.User;
+
 public class LocalDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "storage.db";
     private static final int DB_VERSION = 1;
@@ -24,6 +26,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
                     ");";
 
     private static final String CREATE_ROOT_FOLDER_QUERY = "INSERT INTO Files(id, parent_folder, name, type) VALUES(1, 0, \"root\", \"FOLDER\")";
+    public static User currentUser;
 
     public LocalDatabase(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);

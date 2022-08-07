@@ -26,4 +26,7 @@
     <style name="Theme.GetNotes.AppBarOverlay" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
 
     <style name="Theme.GetNotes.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="TreeNodeStyle">
+        <item name="android:paddingLeft">20dp</item>
+    </style>
 </resources>

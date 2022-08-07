@@ -1,30 +1,46 @@
 package com.unipi.sam.getnotes.note;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.FirebaseDatabase;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
+import com.unipi.sam.getnotes.groups.GroupsActivity;
 import com.unipi.sam.getnotes.note.utility.SerializableNote;
+import com.unipi.sam.getnotes.table.Group;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
 
-public class NoteActivity extends AppCompatActivity implements StylusStyleDialog.StyleListener {
+public class NoteActivity extends AppCompatActivity implements StylusStyleDialog.StyleListener, ActivityResultCallback<ActivityResult>, OnCompleteListener<Void> {
     private BlackboardFragment currentPage;
     private ImageButton stylusButton;
     private final DialogFragment dialog = new StylusStyleDialog();
@@ -35,18 +51,29 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     private final LocalDatabase database = new LocalDatabase(this);
     private int noteID;
     private int currentColor= Color.BLACK;
+    private String noteName;
+    private boolean READ_MODE = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         noteID = getIntent().getIntExtra("id", -1);
-        if (noteID == -1) {
+        noteName = getIntent().getStringExtra("name");
+        String op = getIntent().getStringExtra("op");
+        String content = getIntent().getStringExtra("content");
+
+        if ((noteID == -1 && content == null) || noteName == null) {
             Toast.makeText(this, "Impossibile aprire la nota", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
+        if(op != null && op.equals("READ_ONLY"))
+            READ_MODE = true;
+
+        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), this);
         viewPager = findViewById(R.id.viewPager);
         adapter = new BlackboardViewAdapter(this);
         viewPager.setAdapter(adapter);
@@ -55,6 +82,14 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         stylusButton = findViewById(R.id.stylus_button);
         ImageButton undoButton = findViewById(R.id.undo_button);
         ImageButton textButton = findViewById(R.id.text_button);
+        ImageButton shareButton = findViewById(R.id.share_button);
+        shareButton.setOnClickListener(v -> {
+            save();
+
+            Intent intent = new Intent(this, GroupsActivity.class);
+            intent.putExtra("op", "SHARE_MODE");
+            activityResultLauncher.launch(intent);
+        });
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
@@ -66,7 +101,8 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             }
         });
 
-        findViewById(R.id.add_page).setOnClickListener(e -> {
+        ImageButton addPageButton = findViewById(R.id.add_page);
+        addPageButton.setOnClickListener(e -> {
             adapter.addPage();
             viewPager.setCurrentItem(adapter.getItemCount(), true);
         });
@@ -106,14 +142,24 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             currentTool = BlackboardView.TOOLS.ERASER;
         });
 
-        String content = database.getNoteContent(noteID);
-        int num_pages;
+        if(READ_MODE) {
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            ((ViewGroup) toolbar.getParent()).removeView(toolbar);
+            ((ViewGroup) addPageButton.getParent()).removeView(addPageButton);
+        }
+
+        if(content == null)
+            content= database.getNoteContent(noteID);
+        init(content);
+    }
+
+    private void init(String content) {
         if (content != null) {
             try {
                 Object o = deserialize(content);
                 SerializableNote serializableNote = (SerializableNote) o;
 
-                num_pages = serializableNote.getNumberOfPages();
+                int num_pages = serializableNote.getNumberOfPages();
                 ArrayList<SerializableNote.Page> pages = serializableNote.getPages();
 
                 for (int i = 0; i < num_pages; i++) {
@@ -129,7 +175,6 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             adapter.addPage();
             viewPager.setCurrentItem(0, false);
         }
-
     }
 
     @Override
@@ -190,6 +235,34 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         Object o = in.readObject();
         in.close();
         return o;
+    }
+
+    @Override
+    public void onActivityResult(ActivityResult result) {
+        if (result.getResultCode() == Activity.RESULT_OK) {
+            Intent data = result.getData();
+            HashMap<String, Object> updateMap = new HashMap<>();
+
+            Group.Info info = (Group.Info) data.getSerializableExtra("info");
+            Group.Concept c = (Group.Concept) data.getSerializableExtra("concept");
+            ArrayList<Object> conceptFiles = (ArrayList<Object>) data.getSerializableExtra("choosedConcept");
+
+            Group.Note note = new Group.Note(noteName);
+            conceptFiles.add(note);
+
+            String conceptID = c == null ? "root" : c.getId(); // caso in cui l utente voglia condividere la nota nella prima schermata
+            updateMap.put(String.format("groups/%s/storage/%s", info.getId(), conceptID), conceptFiles);
+            updateMap.put(String.format("notes/%s", note.getId()), database.getNoteContent(noteID));
+            FirebaseDatabase.getInstance().getReference().updateChildren(updateMap).addOnCompleteListener(this);
+        }
+    }
+
+    @Override
+    public void onComplete(@NonNull Task<Void> task) {
+        if(task.isSuccessful())
+            Toast.makeText(this, "Nota condivisa con successo!", Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(this, "Errore nella condivisione, riprova", Toast.LENGTH_SHORT).show();
     }
 
     private class BlackboardViewAdapter extends FragmentStateAdapter {
