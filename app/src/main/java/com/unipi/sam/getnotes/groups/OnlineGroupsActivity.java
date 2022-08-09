@@ -1,44 +1,31 @@
 package com.unipi.sam.getnotes.groups;
 
+import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.paging.CombinedLoadStates;
-import androidx.paging.LoadState;
-import androidx.paging.PagingConfig;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Bundle;
-import android.util.Log;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.firebase.ui.database.paging.DatabasePagingOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
 import com.unipi.sam.getnotes.table.Group;
 
 import java.util.HashMap;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
-
-public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGroupCardAdapter.OnGroupClickListener, OnCompleteListener<Void> {
-    AlertDialog dialog;
+public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGroupCardAdapter.OnGroupClickListener, OnCompleteListener<DataSnapshot> {
+    private AlertDialog dialog;
+    private LocalDatabase localDatabase = new LocalDatabase(this);
+    private Group groupToJoin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,22 +64,47 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
     }
 
     private void joinGroup(Group g) {
-        if(LocalDatabase.currentUser.getMyGroups().containsKey(g.getId())) {
-            Snackbar.make(getWindow().getDecorView().getRootView(), "Ti sei già unito a questo gruppo!", Snackbar.LENGTH_SHORT).show();
-            return;
-        }
+        this.groupToJoin = g;
 
-        HashMap<String, Object> updateMap = new HashMap<>();
-        LocalDatabase.currentUser.addGroup(g.getInfo());
-        updateMap.put(String.format("users/%s/myGroups/%s", LocalDatabase.currentUser.getId(), g.getId()), g.getInfo());
-        updateMap.put(String.format("groupsMembers/%s", g.getId()), LocalDatabase.currentUser.getInfo());
-        FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
-                .addOnCompleteListener(this);
-        dialog.dismiss();
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference().child("users").child(localDatabase.getUserId());
+        database.keepSynced(true);
+        database.child("myGroups").child(g.getId()).get().addOnCompleteListener(this);
+//
+//        if(LocalDatabase.currentUser.getMyGroups().containsKey(g.getId())) {
+//            Snackbar.make(getWindow().getDecorView().getRootView(), "Ti sei già unito a questo gruppo!", Snackbar.LENGTH_SHORT).show();
+//            return;
+//        }
+
+//        HashMap<String, Object> updateMap = new HashMap<>();
+//        LocalDatabase.currentUser.addGroup(g.getInfo());
+//        updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), g.getId()), g.getInfo());
+//        updateMap.put(String.format("groupsMembers/%s", g.getId()), localDatabase.getUserPairInfo());
+//        FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
+//                .addOnCompleteListener(task -> finish());
+//        dialog.dismiss();
     }
 
     @Override
-    public void onComplete(@NonNull Task task) {
-        finish();
+    public void onComplete(@NonNull Task<DataSnapshot> task) {
+        if(task.isSuccessful()) {
+            DataSnapshot snapshot = task.getResult();
+            if(snapshot.exists()){
+                Snackbar.make(getWindow().getDecorView().getRootView(), "Ti sei già unito a questo gruppo!", Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+
+            HashMap<String, Object> updateMap = new HashMap<>();
+//            LocalDatabase.currentUser.addGroup(g.getInfo());
+            updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), groupToJoin.getId()), groupToJoin.getInfo());
+            updateMap.put(String.format("groupsMembers/%s", groupToJoin.getId()), localDatabase.getUserPairInfo());
+            FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
+                    .addOnCompleteListener(t2 -> finish());
+            dialog.dismiss();
+        }
     }
+
+//    @Override
+//    public void onComplete(@NonNull Task task) {
+//        finish();
+//    }
 }

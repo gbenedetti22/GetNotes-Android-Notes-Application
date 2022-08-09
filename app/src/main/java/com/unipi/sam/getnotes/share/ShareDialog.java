@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -14,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -27,6 +29,7 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class ShareDialog extends DialogFragment implements DialogInterface.OnClickListener, OnCompleteListener<DataSnapshot>, TreeNode.TreeNodeClickListener {
     private Group.Info info;
@@ -63,6 +66,12 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
                 .child("storage")
                 .get().addOnCompleteListener(this);
         return builder.create();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ((AlertDialog) Objects.requireNonNull(getDialog())).getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
     }
 
     @Override
@@ -110,6 +119,8 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
                 buildTree(storage);
             }
         }
+
+        ((AlertDialog) Objects.requireNonNull(getDialog())).getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(true);
     }
 
     private void buildTree(HashMap<String, ArrayList<Object>> storage) {

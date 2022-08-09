@@ -2,6 +2,7 @@ package com.unipi.sam.getnotes.home;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +16,6 @@ import com.unipi.sam.getnotes.R;
 import java.util.ArrayList;
 
 public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.ViewHolder> {
-    private static final String TAG = "IconsViewAdapter";
     private Cursor cursor;
 
     public interface IconTouchListener {
@@ -102,6 +102,7 @@ public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.View
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             this.itemView = itemView;
+            this.itemView.setTag(this);
         }
 
         public void setAsFolder() {
@@ -115,6 +116,10 @@ public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.View
         public void setText(String name) {
             label.setText(name);
             this.name = name;
+        }
+
+        public View getIconView() {
+            return itemView;
         }
 
         public int getId() {
@@ -141,9 +146,6 @@ public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.View
             this.type = type;
         }
 
-        public void setParentFolder(int parent_folder) {
-            this.parent_folder = parent_folder;
-        }
 
         public void setOnClickListener(View.OnClickListener listener) {
             itemView.setOnClickListener(listener);

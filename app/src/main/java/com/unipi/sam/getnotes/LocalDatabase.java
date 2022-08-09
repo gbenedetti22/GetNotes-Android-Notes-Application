@@ -2,47 +2,115 @@ package com.unipi.sam.getnotes;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.unipi.sam.getnotes.table.User;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class LocalDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "storage.db";
     private static final int DB_VERSION = 1;
     private int currentFolderID;
-    private static final String FILES_TABLE_NAME = "Files";
-    private static final String CREATE_FILES_TABLE_QUERY =
+    private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+    private final String FILES_TABLE_NAME = "Files";
+    private final String CREATE_FILES_TABLE_QUERY =
             "CREATE TABLE \"Files\" (\n" +
                     "\t\"id\"\tINTEGER PRIMARY KEY AUTOINCREMENT,\n" +
                     "\t\"parent_folder\"\tINTEGER NOT NULL,\n" +
                     "\t\"name\"\tvarchar(255) NOT NULL,\n" +
                     "\t\"content\"\tTEXT,\n" +
-                    "\t\"type\"\tvarchar(255) NOT NULL DEFAULT 'FILE'\n" +
+                    "\t\"type\"\tvarchar(255) NOT NULL DEFAULT 'FILE',\n" +
+                    "\t\"date\"\tTEXT\n" +
                     ");";
 
-    private static final String CREATE_ROOT_FOLDER_QUERY = "INSERT INTO Files(id, parent_folder, name, type) VALUES(1, 0, \"root\", \"FOLDER\")";
-    public static User currentUser;
+    private final String CREATE_ROOT_FOLDER_QUERY = "INSERT INTO Files(id, parent_folder, name, type) VALUES(1, 0, \"root\", \"FOLDER\")";
+
+    public enum SORTING_OPTIONS {
+        NAME,
+        DATE,
+        TYPE
+    }
+    private SORTING_OPTIONS sortingOptions;
+    private final String SHARED_PREFERENCE_FILENAME = "UNIPI_GETNOTES_PREFERENCE_FILE";
+
+    private String userId;
+    private String name;
+    private User.Info info;
+    private SharedPreferences preferences;
+
+    public static int ROOT_ID = 1;
 
     public LocalDatabase(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
-        currentFolderID = 1;
+        currentFolderID = ROOT_ID;
+        if(context == null) throw new NullPointerException("Context cannot be null");
+
+        preferences = context.getSharedPreferences(SHARED_PREFERENCE_FILENAME, Context.MODE_PRIVATE);
+
+        this.userId = preferences.getString("id", null);
+        this.name = preferences.getString("name", null);
+        String sortOptions = preferences.getString("sortingOptions", null);
+        if(sortOptions == null)
+            setSortingOptions(SORTING_OPTIONS.NAME);
+        else {
+            switch (sortOptions){
+                case "NAME": sortingOptions = SORTING_OPTIONS.NAME; break;
+                case "DATE": sortingOptions = SORTING_OPTIONS.DATE; break;
+                case "TYPE": sortingOptions = SORTING_OPTIONS.TYPE; break;
+            }
+        }
+
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_FILES_TABLE_QUERY);
         db.execSQL(CREATE_ROOT_FOLDER_QUERY);
+        db.close();
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + FILES_TABLE_NAME);
+        String USER_TABLE_NAME = "User";
+        db.execSQL("DROP TABLE IF EXISTS " + USER_TABLE_NAME);
         onCreate(db);
+    }
+
+    public void setUser(@NonNull User u) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("id", u.getId());
+        editor.putString("name", u.getName());
+        editor.apply();
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public User.Info getUserPairInfo() {
+        if (info == null) {
+            info = new User.Info(userId, name);
+        }
+
+        return info;
+    }
+
+    public String getUserName() {
+        return name;
+    }
+
+    public boolean userExist() {
+        return userId != null && name != null;
     }
 
     public void clear() {
@@ -53,6 +121,9 @@ public class LocalDatabase extends SQLiteOpenHelper {
         this.currentFolderID = currentFolderID;
     }
 
+    public String now() {
+        return sdf.format(new Date());
+    }
     public int addNote(String name, String content) throws Exception {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -62,10 +133,12 @@ public class LocalDatabase extends SQLiteOpenHelper {
             cv.put("content", content);
 
         cv.put("type", "NOTE");
+        cv.put("date", sdf.format(new Date()));
         if (db.insert(FILES_TABLE_NAME, null, cv) == -1) {
             throw new Exception("error on insert note");
         }
 
+        db.close();
         return getPrimaryKeyOfLastInsertedFile();
     }
 
@@ -73,40 +146,77 @@ public class LocalDatabase extends SQLiteOpenHelper {
         return addNote(name, null);
     }
 
-    public int createFolder(String name) throws Exception {
+    public void createFolder(String name) throws Exception {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
         cv.put("parent_folder", currentFolderID);
         cv.put("type", "FOLDER");
+        cv.put("date", sdf.format(new Date()));
         long id = db.insert(FILES_TABLE_NAME, null, cv);
         if (id == -1) throw new Exception("error on creating new folder");
-        return getPrimaryKeyOfLastInsertedFile();
+        db.close();
     }
 
     public Cursor getFiles() {
-        return getReadableDatabase().rawQuery("SELECT * FROM " + FILES_TABLE_NAME + " WHERE parent_folder = " + currentFolderID, null);
+        return getFiles(sortingOptions);
+    }
+
+    public void setSortingOptions(SORTING_OPTIONS sortingOptions) {
+        this.sortingOptions = sortingOptions;
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("sortingOptions", sortingOptions.name());
+        editor.apply();
+    }
+
+    public SORTING_OPTIONS getSortingOptions() {
+        return sortingOptions;
+    }
+
+    private Cursor getFiles(SORTING_OPTIONS options) {
+        switch (options) {
+            case NAME: return getReadableDatabase().rawQuery("SELECT * FROM " + FILES_TABLE_NAME + " WHERE parent_folder = " + currentFolderID + " ORDER BY name", null);
+            case DATE: return getReadableDatabase().rawQuery("SELECT * FROM " + FILES_TABLE_NAME + " WHERE parent_folder = " + currentFolderID + " ORDER BY date", null);
+            case TYPE: return getReadableDatabase().rawQuery("SELECT * FROM " + FILES_TABLE_NAME + " WHERE parent_folder = " + currentFolderID + " ORDER BY type", null);
+        }
+
+        throw new IllegalArgumentException("sort must be: name, date or type");
     }
 
     private int getPrimaryKeyOfLastInsertedFile() {
-        return getLastPK(getFiles());
+        Cursor cursor = getFiles();
+        int lastPK = getLastPK(cursor);
+        cursor.close();
+        return lastPK;
+    }
+
+    public void rename(int id, String name) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("name", name);
+        db.update(FILES_TABLE_NAME, cv, "id = ?", new String[]{String.valueOf(id)});
     }
 
     public void updateNoteContent(int id, String content) {
-        getWritableDatabase().execSQL("UPDATE Files SET content = \""+ content + "\" WHERE id = " + id);
+        SQLiteDatabase db = getWritableDatabase();
+        db.execSQL("UPDATE Files SET content = \"" + content + "\" WHERE id = " + id);
+        db.close();
     }
 
     public String getNoteContent(int id) {
-        Cursor c = getReadableDatabase().rawQuery("SELECT * FROM Files WHERE id = " + id, null);
+        SQLiteDatabase database = getReadableDatabase();
+        Cursor c = database.rawQuery("SELECT * FROM Files WHERE id = " + id, null);
         c.moveToPosition(0);
 
-        if(c.isNull(3)) {
+        if (c.isNull(3)) {
             c.close();
+            database.close();
             return null;
         }
 
         String content = c.getString(3);
         c.close();
+        database.close();
         return content;
     }
 

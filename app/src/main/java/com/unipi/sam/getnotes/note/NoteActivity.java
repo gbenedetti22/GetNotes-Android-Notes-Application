@@ -48,7 +48,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     private BlackboardViewAdapter adapter;
     private BlackboardView.TOOLS currentTool = BlackboardView.TOOLS.NONE;
     private final ArrayList<BlackboardFragment> pages = new ArrayList<>();
-    private final LocalDatabase database = new LocalDatabase(this);
+    private LocalDatabase database;
     private int noteID;
     private int currentColor= Color.BLACK;
     private String noteName;
@@ -58,6 +58,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
+        database = new LocalDatabase(this);
         noteID = getIntent().getIntExtra("id", -1);
         noteName = getIntent().getStringExtra("name");
         String op = getIntent().getStringExtra("op");

@@ -25,6 +25,8 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility '1.8'
+        targetCompatibility '1.8'
     }
     buildFeatures {
         viewBinding true
@@ -41,6 +43,7 @@ dependencies {
     implementation 'androidx.paging:paging-runtime:3.1.1'
     implementation 'com.github.mgbckr:nachos-v2:v1.1.2'
     implementation 'com.github.bmelnychuk:atv:1.2.9'
+    implementation 'com.github.addisonelliott:SegmentedButton:3.1.9'
     implementation 'com.google.firebase:firebase-database:20.0.5'
     implementation 'androidx.navigation:navigation-fragment:2.5.1'
     implementation 'androidx.navigation:navigation-ui:2.5.1'

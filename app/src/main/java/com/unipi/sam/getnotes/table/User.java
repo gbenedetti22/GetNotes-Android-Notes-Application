@@ -57,6 +57,11 @@ public class User implements Serializable {
         public Info() {
         }
 
+        public Info(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
         public String getId() {
             return id;
         }

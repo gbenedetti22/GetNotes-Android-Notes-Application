@@ -16,6 +16,7 @@ import com.unipi.sam.getnotes.table.User;
 
 public class CreateUserActivity extends AppCompatActivity implements View.OnClickListener{
     private TextInputEditText input;
+    private LocalDatabase localDB = new LocalDatabase(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +37,8 @@ public class CreateUserActivity extends AppCompatActivity implements View.OnClic
         String id = getIntent().getStringExtra("id");
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         User u = new User(id, name);
-        LocalDatabase.currentUser = u;
+//        LocalDatabase.currentUser = u;
+        localDB.setUser(u);
         database.child("users").child(id).setValue(u).addOnCompleteListener(t -> {
             startHomeActivity();
         });

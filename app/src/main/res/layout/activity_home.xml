@@ -14,15 +14,82 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize" />
+            android:layout_height="?attr/actionBarSize" >
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/folderNameTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textColor="@color/white"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.appcompat.widget.Toolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
+
+    <com.addisonelliott.segmentedbutton.SegmentedButtonGroup
+        android:id="@+id/buttonGroup"
+        android:layout_below="@+id/appBarLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:background="@color/light_grey"
+        app:selectedBackground="@color/white"
+        app:selectedBorderWidth="5dp"
+        app:selectedBorderColor="@color/light_grey"
+        app:selectedButtonRadius="20dp"
+        app:borderColor="@color/white"
+        android:layout_margin="4dp"
+        app:borderWidth="1dp"
+        app:divider="@color/white"
+        app:draggable="false"
+        app:dividerWidth="1dp"
+        app:dividerPadding="10dp"
+        app:radius="30dp"
+        app:ripple="true">
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:tag="sort_byName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            app:text="Nome"
+            app:textSize="12sp"
+            app:textColor="@color/black" />
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:tag="sort_byDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            app:textSize="12sp"
+            app:text="Data"
+            app:textColor="@color/black" />
+
+        <com.addisonelliott.segmentedbutton.SegmentedButton
+            android:tag="sort_byType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            app:text="Tipo"
+            app:textSize="12sp"
+            app:textColor="@color/black" />
+    </com.addisonelliott.segmentedbutton.SegmentedButtonGroup>
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_below="@+id/appBarLayout"
+        android:layout_below="@+id/buttonGroup"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp" />
 

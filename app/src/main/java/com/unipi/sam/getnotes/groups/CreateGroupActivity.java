@@ -18,6 +18,7 @@ import com.unipi.sam.getnotes.table.Group;
 import java.util.HashMap;
 
 public class CreateGroupActivity extends AppCompatActivity {
+    private LocalDatabase localDatabase = new LocalDatabase(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,16 +39,16 @@ public class CreateGroupActivity extends AppCompatActivity {
                 return;
             }
 
-            Group g = new Group(groupName);
+            Group g = new Group(localDatabase.getUserId(), localDatabase.getUserName(), groupName);
 
             for (int i = 0; i < chipsInput.getChipValues().size(); i++) {
                 g.addConcept(new Group.Concept(chipsInput.getChipValues().get(i)));
             }
 
-            LocalDatabase.currentUser.addGroup(g.getInfo());
+//            LocalDatabase.currentUser.addGroup(g.getInfo());
             HashMap<String, Object> updateMap = new HashMap<>();
             updateMap.put("groups/" + g.getId(), g);
-            updateMap.put("users/" + LocalDatabase.currentUser.getId(), LocalDatabase.currentUser);
+            updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), g.getId()), g);
             database.updateChildren(updateMap);
             finish();
         });

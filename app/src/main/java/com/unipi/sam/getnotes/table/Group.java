@@ -30,10 +30,10 @@ public class Group {
     public Group() {
     }
 
-    public Group(String name) {
+    public Group(String authorId, String authorName, String name) {
         this.info.id = UUID.randomUUID().toString();
-        this.info.authorId = LocalDatabase.currentUser.getInfo().getId();
-        this.info.authorName = LocalDatabase.currentUser.getInfo().getName();
+        this.info.authorId = authorId;
+        this.info.authorName = authorName;
         this.info.groupName = name;
         this.info.snapDate();
     }

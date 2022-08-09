@@ -37,6 +37,7 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
     private MaterialTextView searchOnlineTextView;
     private String queryText = "";
     private boolean SHARE_MODE = false;
+    private LocalDatabase localDatabase = new LocalDatabase(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +62,7 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         Query query = database.child("users")
-                .child(LocalDatabase.currentUser.getId())
+                .child(localDatabase.getUserId())
                 .child("myGroups");
 
         adapter = new LocalGroupListAdapter();
@@ -121,7 +122,7 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
         Intent intent = new Intent(this, ViewGroupActivity.class);
         intent.putExtra("id", g.getId());
         intent.putExtra("groupName", g.getGroupName());
-        if(!g.getAuthorId().equals(LocalDatabase.currentUser.getId())) {
+        if(!g.getAuthorId().equals(localDatabase.getUserId())) {
             intent.putExtra("op", "READ_ONLY");
         }
         startActivity(intent);
