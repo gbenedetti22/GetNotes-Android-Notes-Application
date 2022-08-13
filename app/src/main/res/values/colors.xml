@@ -22,5 +22,7 @@
     <color name="green">#2C8800</color>
     <color name="acqua_green">#00FF66</color>
     <color name="violet">#FF00C7</color>
-
+    <color name="background_darkmode">#002B6A</color>
+    <color name="appbarColor_darkmode">#A1ACE1</color>
+    <color name="searchView_darkmode">#00529D</color>
 </resources>

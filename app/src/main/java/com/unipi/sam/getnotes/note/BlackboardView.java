@@ -5,7 +5,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -22,10 +25,9 @@ import com.unipi.sam.getnotes.note.utility.Text;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class BlackboardView extends View {
-    public enum TOOLS {
+    public enum TOOL {
         ERASER,
         STYLUS,
         TEXT,
@@ -35,7 +37,7 @@ public class BlackboardView extends View {
     private final ArrayList<Stroke> lines = new ArrayList<>();
     private ArrayList<Serializable> history = new ArrayList<>();
     private int currentColor = Color.BLACK;
-    private int strokeWidth = 20;
+    private int strokeWidth = StylusStyleDialog.DEFAULT_STROKE_WIDTH;
     private float currentPosX;
     private float currentPosY;
     private Canvas viewCanvas;
@@ -43,9 +45,13 @@ public class BlackboardView extends View {
     private final Paint brush = new Paint();
     private final Paint ditherPaint = new Paint(Paint.DITHER_FLAG);
     private FrameLayout root;
-    private TOOLS currentTool;
+    private TOOL currentTool;
     private EditText clickedEditText;
     private boolean restoreBlackboard = false;
+    private PorterDuffXfermode clearMode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
+    private DashPathEffect dashPathEffect = new DashPathEffect(new float[]{60, 20}, 0);
+    private int eraserSize = EraserDialog.ERASER_DEFAULT_SIZE;
+    private RectF eraseZone = new RectF();
 
     public BlackboardView(Context context) {
         super(context);
@@ -67,10 +73,10 @@ public class BlackboardView extends View {
         brush.setDither(true);
         brush.setStrokeCap(Paint.Cap.ROUND);
         brush.setStrokeJoin(Paint.Join.ROUND);
-        currentTool = TOOLS.NONE;
+        currentTool = TOOL.NONE;
     }
 
-    private void touchStart(float x, float y) {
+    private Stroke touchStart(float x, float y) {
         Stroke stroke = new Stroke(currentColor, strokeWidth);
         stroke.moveTo(x, y);
         stroke.lineTo(x, y);
@@ -80,6 +86,7 @@ public class BlackboardView extends View {
 
         currentPosX = x;
         currentPosY = y;
+        return stroke;
     }
 
     private void touchMove(float x, float y) {
@@ -91,17 +98,17 @@ public class BlackboardView extends View {
     }
 
     public void undo() {
-        if(history.isEmpty()) return;
+        if (history.isEmpty()) return;
 
         Object elem = history.remove(history.size() - 1);
 
-        if(elem instanceof EditText) {
+        if (elem instanceof EditText) {
             EditText editText = (EditText) elem;
             root.removeView(editText);
             return;
         }
 
-        if(elem instanceof Stroke) {
+        if (elem instanceof Stroke) {
             Stroke stroke = (Stroke) elem;
             lines.remove(stroke);
             invalidate();
@@ -133,12 +140,56 @@ public class BlackboardView extends View {
         this.root = root;
     }
 
-    public void setTool(TOOLS currentTool) {
+    public void setTool(TOOL currentTool) {
         this.currentTool = currentTool;
     }
 
-    public TOOLS getCurrentTool() {
+    public TOOL getCurrentTool() {
         return currentTool;
+    }
+
+    public void setEraserSize(int eraserSize) {
+        this.eraserSize = eraserSize;
+    }
+
+    @Override
+    public boolean onTouchEvent(@NonNull MotionEvent event) {
+        float x = event.getX();
+        float y = event.getY();
+
+        if (event.getAction() == MotionEvent.ACTION_DOWN)
+            hideKeyboard();
+
+        switch (currentTool) {
+            case TEXT: {
+                if (event.getAction() == MotionEvent.ACTION_DOWN)
+                    addText(x, y);
+                break;
+            }
+            case ERASER: {
+                if (event.getAction() == MotionEvent.ACTION_MOVE
+                        || event.getAction() == MotionEvent.ACTION_DOWN) {
+                    drawStroke(event, x, y, true);
+                    eraseZone.set(x - eraserSize, y - eraserSize, x + eraserSize, y + eraserSize);
+                } else {
+                    eraseZone.setEmpty();
+                }
+                break;
+            }
+
+            case STYLUS: {
+                drawStroke(event, x, y, false);
+                break;
+            }
+
+            case NONE: {
+                return true;
+            }
+        }
+
+
+        invalidate();
+        return true;
     }
 
     @Override
@@ -147,17 +198,24 @@ public class BlackboardView extends View {
         int bgColor = Color.WHITE;
         viewCanvas.drawColor(bgColor);
 
-        if(restoreBlackboard) {
+        if (restoreBlackboard) {
             restoreBlackboard = false;
             restore(canvas);
             return;
         }
 
         for (Stroke line : lines) {
-            brush.setColor(line.getColor());
-            brush.setStrokeWidth(line.getStrokeWidth());
+            drawLine(line);
+        }
+
+        if (currentTool == TOOL.ERASER) {
+            brush.setMaskFilter(null);
+            brush.setXfermode(null);
+            brush.setStrokeWidth(7);
             brush.setStyle(Paint.Style.STROKE);
-            viewCanvas.drawPath(line, brush);
+            brush.setColor(Color.LTGRAY);
+            brush.setPathEffect(dashPathEffect);
+            viewCanvas.drawOval(eraseZone, brush);
         }
 
         canvas.drawBitmap(bitmap, 0, 0, ditherPaint);
@@ -178,15 +236,27 @@ public class BlackboardView extends View {
 
             if (o instanceof Stroke) {
                 Stroke line = (Stroke) o;
-                brush.setColor(line.getColor());
-                brush.setStrokeWidth(line.getStrokeWidth());
-                brush.setStyle(Paint.Style.STROKE);
-                viewCanvas.drawPath(line, brush);
+                drawLine(line);
                 this.lines.add(line);
             }
         }
 
         canvas.drawBitmap(bitmap, 0, 0, ditherPaint);
+    }
+
+    private void drawLine(Stroke line) {
+        brush.setColor(line.getColor());
+        brush.setStrokeWidth(line.getStrokeWidth());
+        brush.setPathEffect(null);
+        brush.setStyle(Paint.Style.STROKE);
+        if (line.isBlank()) {
+            brush.setMaskFilter(null);
+            brush.setXfermode(clearMode);
+        } else {
+            brush.setMaskFilter(null);
+            brush.setXfermode(null);
+        }
+        viewCanvas.drawPath(line, brush);
     }
 
     private void setBitmap() {
@@ -196,65 +266,17 @@ public class BlackboardView extends View {
         }
     }
 
-    @Override
-    public boolean onTouchEvent(@NonNull MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-
-        if(event.getAction() == MotionEvent.ACTION_DOWN)
-            hideKeyboard();
-
-        switch (currentTool) {
-            case TEXT: {
-                if (event.getAction() == MotionEvent.ACTION_DOWN)
-                    addText(x, y);
-                break;
-            }
-            case ERASER: {
-                erase(x, y);
-                break;
-            }
-
-            case STYLUS: {
-                drawStroke(event, x, y);
-                break;
-            }
-
-            case NONE: {
-                return true;
-            }
-        }
-
-
-        invalidate();
-        return true;
-    }
-
-    private void drawStroke(@NonNull MotionEvent event, float x, float y) {
+    private void drawStroke(@NonNull MotionEvent event, float x, float y, boolean erase) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                touchStart(x, y);
+                Stroke s = touchStart(x, y);
+                if (erase)
+                    s.setErase(true, eraserSize * 2);
                 break;
             case MotionEvent.ACTION_MOVE:
                 touchMove(x, y);
                 break;
         }
-    }
-
-    private void erase(float x, float y) {
-        Iterator<Stroke> line = lines.iterator();
-        while (line.hasNext()) {
-            Stroke p = line.next();
-            RectF bounds = new RectF();
-            p.computeBounds(bounds, true);
-            if (bounds.contains(x, y)) {
-                line.remove();
-                history.remove(p);
-                break;
-            }
-        }
-
-        invalidate();
     }
 
     private void addText(float x, float y) {
@@ -268,7 +290,7 @@ public class BlackboardView extends View {
 
         history.add(t);
 
-        setTool(TOOLS.NONE);
+        setTool(TOOL.NONE);
         root.addView(text);
 
         showKeyboard(text);
@@ -282,7 +304,7 @@ public class BlackboardView extends View {
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
         if (imm.isAcceptingText()) {
             imm.hideSoftInputFromWindow(getWindowToken(), 0);
-            if(clickedEditText != null)
+            if (clickedEditText != null)
                 clickedEditText.clearFocus();
         }
     }

@@ -24,13 +24,15 @@ import java.util.HashMap;
 
 public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGroupCardAdapter.OnGroupClickListener, OnCompleteListener<DataSnapshot> {
     private AlertDialog dialog;
-    private LocalDatabase localDatabase = new LocalDatabase(this);
+    private LocalDatabase localDatabase;
     private Group groupToJoin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_online_groups);
+
+        localDatabase = new LocalDatabase(this);
         String queryText = getIntent().getStringExtra("query");
 
         RecyclerView recyclerView = findViewById(R.id.recyclerView_onlineGroups);
@@ -69,19 +71,6 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
         DatabaseReference database = FirebaseDatabase.getInstance().getReference().child("users").child(localDatabase.getUserId());
         database.keepSynced(true);
         database.child("myGroups").child(g.getId()).get().addOnCompleteListener(this);
-//
-//        if(LocalDatabase.currentUser.getMyGroups().containsKey(g.getId())) {
-//            Snackbar.make(getWindow().getDecorView().getRootView(), "Ti sei già unito a questo gruppo!", Snackbar.LENGTH_SHORT).show();
-//            return;
-//        }
-
-//        HashMap<String, Object> updateMap = new HashMap<>();
-//        LocalDatabase.currentUser.addGroup(g.getInfo());
-//        updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), g.getId()), g.getInfo());
-//        updateMap.put(String.format("groupsMembers/%s", g.getId()), localDatabase.getUserPairInfo());
-//        FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
-//                .addOnCompleteListener(task -> finish());
-//        dialog.dismiss();
     }
 
     @Override
@@ -94,7 +83,6 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
             }
 
             HashMap<String, Object> updateMap = new HashMap<>();
-//            LocalDatabase.currentUser.addGroup(g.getInfo());
             updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), groupToJoin.getId()), groupToJoin.getInfo());
             updateMap.put(String.format("groupsMembers/%s", groupToJoin.getId()), localDatabase.getUserPairInfo());
             FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
@@ -102,9 +90,4 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
             dialog.dismiss();
         }
     }
-
-//    @Override
-//    public void onComplete(@NonNull Task task) {
-//        finish();
-//    }
 }

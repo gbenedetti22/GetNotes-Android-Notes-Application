@@ -3,6 +3,7 @@ package com.unipi.sam.getnotes.groups;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -37,7 +38,7 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
     private MaterialTextView searchOnlineTextView;
     private String queryText = "";
     private boolean SHARE_MODE = false;
-    private LocalDatabase localDatabase = new LocalDatabase(this);
+    private LocalDatabase localDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,8 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
         if(opmode != null && opmode.equals("SHARE_MODE")) {
             SHARE_MODE = true;
         }
+
+        localDatabase = new LocalDatabase(this);
 
         RecyclerView recyclerView = findViewById(R.id.groups_view);
         searchOnlineTextView = findViewById(R.id.search_online);
@@ -61,7 +64,8 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        Query query = database.child("users")
+        Query query = database
+                .child("users")
                 .child(localDatabase.getUserId())
                 .child("myGroups");
 
@@ -118,7 +122,6 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
             dialog.show(getSupportFragmentManager(), "Share on Concept");
             return;
         }
-
         Intent intent = new Intent(this, ViewGroupActivity.class);
         intent.putExtra("id", g.getId());
         intent.putExtra("groupName", g.getGroupName());
@@ -134,10 +137,16 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
             GenericTypeIndicator<HashMap<String, Group.Info>> typeIndicator = new GenericTypeIndicator<HashMap<String, Group.Info>>() {
             };
             HashMap<String, Group.Info> serverGroups = snapshot.getValue(typeIndicator);
+            Log.d("result", snapshot.getValue().toString());
+
+            assert serverGroups != null;
             groups = new ArrayList<>(serverGroups.values());
             groups.sort(null);
             adapter.setGroups(groups);
+            return;
         }
+
+        Log.d("result", "not exist");
     }
 
     @Override
@@ -150,7 +159,7 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
         Intent intent = new Intent();
         intent.putExtra("info", info);
         intent.putExtra("concept", g);
-        intent.putExtra("choosedConcept", conceptFiles);
+        intent.putExtra("choosedConcept", conceptFiles == null ? new ArrayList<>() : conceptFiles);
         setResult(Activity.RESULT_OK, intent);
         finish();
     }

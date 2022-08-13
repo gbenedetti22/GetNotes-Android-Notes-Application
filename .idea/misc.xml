@@ -8,6 +8,7 @@
         <entry key="app/src/main/res/drawable/add_folder_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/add_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/add_page_icon.xml" value="0.26" />
+        <entry key="app/src/main/res/drawable/border.xml" value="0.1625" />
         <entry key="app/src/main/res/drawable/circle.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/concept_icon.xml" value="0.26" />
         <entry key="app/src/main/res/drawable/eraser_icon.xml" value="0.259" />
@@ -23,8 +24,23 @@
         <entry key="app/src/main/res/drawable/text_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/undo.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/undo_icon.xml" value="0.259" />
+        <entry key="app/src/main/res/layout-night/activity_create_group.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_create_user.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_groups.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_home.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_main.xml" value="0.33" />
+        <entry key="app/src/main/res/layout-night/activity_note.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_online_groups.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_view_group.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/concept_card_view.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/eraser_settings_dialog.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/folder_card_view.xml" value="0.33" />
+        <entry key="app/src/main/res/layout-night/group_card_view.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/note_card_view.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/stylus_settings_dialog.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/treeview_concept_layout.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/activity_create_group.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/activity_create_user.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_create_user.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_groups.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_home.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.34479166666666666" />
@@ -34,6 +50,7 @@
         <entry key="app/src/main/res/layout/activity_view_group.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/concept_card_view.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/content_home.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout/eraser_settings_dialog.xml" value="0.4933058702368692" />
         <entry key="app/src/main/res/layout/folder_card_view.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_blackboard.xml" value="0.25" />
         <entry key="app/src/main/res/layout/group_card_view.xml" value="0.34375" />

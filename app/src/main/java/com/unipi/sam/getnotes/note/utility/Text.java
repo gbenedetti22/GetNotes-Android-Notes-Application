@@ -99,6 +99,8 @@ public class Text implements Serializable, TextWatcher {
         EditText eText = new EditText(context);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         eText.setText(text);
+        eText.setShowSoftInputOnFocus(true);
+        eText.setTextColor(Color.BLACK);
         eText.setX(x);
         eText.setY(y - 50);
         eText.setBackground(null);

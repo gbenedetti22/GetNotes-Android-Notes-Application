@@ -50,12 +50,6 @@ public class SerializableNote implements Serializable {
         private String title;
         private String date;
 
-        public Page(ArrayList<Serializable> history, String title, String date) {
-            this.history = history;
-            this.title = title;
-            this.date = date;
-        }
-
         public Page() {
             this.title = "Title";
             this.history = new ArrayList<>();

@@ -117,6 +117,8 @@ public class Group {
         }
 
         public static Concept fromMap(HashMap<String, Object> map) {
+            if(!Objects.equals(map.get("type"), "CONCEPT")) return null;
+
             Concept c = new Concept();
             c.id = (String) map.get("id");
             c.name = (String) map.get("name");

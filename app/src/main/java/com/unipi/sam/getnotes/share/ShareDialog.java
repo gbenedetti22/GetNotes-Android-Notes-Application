@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -127,8 +129,11 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
         ArrayList<TreeNode> nodes = new ArrayList<>();
 
         ArrayList<Object> objs = storage.get("root");
+        assert objs != null;
         for (Object o : objs) {
             Group.Concept c = Group.Concept.fromMap((HashMap<String, Object>) o);
+            if(c == null) continue;
+
             TreeNode node = createNode(c);
             buildTreeRecursive(c, node, storage);
             nodes.add(node);
@@ -148,6 +153,8 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
         ArrayList<Object> objs = storage.get(concept.getId());
         for (Object o : objs) {
             Group.Concept c = Group.Concept.fromMap((HashMap<String, Object>) o);
+            if(c == null) continue;
+
             TreeNode node = createNode(c);
             rootNode.addChild(node);
             buildTreeRecursive(c, node, storage);
@@ -171,13 +178,14 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
 
     @Override
     public void onClick(TreeNode node, Object value) {
+        boolean dark_mode = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         if (selectedHolder != null) {
-            selectedHolder.getTextView().setTextColor(Color.BLACK);
+            selectedHolder.getTextView().setTextColor(dark_mode ? Color.WHITE : Color.BLACK);
             selectedHolder.getTextView().setTypeface(null, Typeface.NORMAL);
         }
 
         ConceptTreeViewHolder holder = (ConceptTreeViewHolder) node.getViewHolder();
-        holder.getTextView().setTextColor(Color.BLUE);
+        holder.getTextView().setTextColor(ResourcesCompat.getColor(getResources(), R.color.acquamarine, null));
         holder.getTextView().setTypeface(null, Typeface.BOLD);
         selectedHolder = holder;
     }

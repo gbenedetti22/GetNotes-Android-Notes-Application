@@ -18,12 +18,14 @@ import com.unipi.sam.getnotes.table.Group;
 import java.util.HashMap;
 
 public class CreateGroupActivity extends AppCompatActivity {
-    private LocalDatabase localDatabase = new LocalDatabase(this);
+    private LocalDatabase localDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_group);
+
+        localDatabase = new LocalDatabase(this);
         TextInputEditText input = findViewById(R.id.input_text);
         View submitBtn = findViewById(R.id.submit_group_button);
 
@@ -45,10 +47,9 @@ public class CreateGroupActivity extends AppCompatActivity {
                 g.addConcept(new Group.Concept(chipsInput.getChipValues().get(i)));
             }
 
-//            LocalDatabase.currentUser.addGroup(g.getInfo());
             HashMap<String, Object> updateMap = new HashMap<>();
             updateMap.put("groups/" + g.getId(), g);
-            updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), g.getId()), g);
+            updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), g.getId()), g.getInfo());
             database.updateChildren(updateMap);
             finish();
         });

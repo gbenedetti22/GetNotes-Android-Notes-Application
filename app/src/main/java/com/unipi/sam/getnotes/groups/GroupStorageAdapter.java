@@ -67,8 +67,10 @@ public class GroupStorageAdapter extends RecyclerView.Adapter<GroupStorageAdapte
                 holder.label.setText(concept.getName());
                 holder.parent_folder = currentPosition;
                 holder.itemView.setOnClickListener(v -> {
-                    if(listener != null)
-                        listener.onConceptIconClick(concept.getId(), currentPosition);
+                    if(listener != null) {
+                        listener.onConceptIconClick(concept.getId(), holder.parent_folder);
+                        currentPosition = concept.getId();
+                    }
                 });
                 break;
             }

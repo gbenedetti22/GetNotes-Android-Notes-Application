@@ -5,6 +5,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -17,13 +18,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.FirebaseDatabase;
+import com.unipi.sam.getnotes.BorderDrawable;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
 import com.unipi.sam.getnotes.groups.GroupsActivity;
@@ -34,31 +38,36 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
 import java.util.HashMap;
 
-public class NoteActivity extends AppCompatActivity implements StylusStyleDialog.StyleListener, ActivityResultCallback<ActivityResult>, OnCompleteListener<Void> {
+public class NoteActivity extends AppCompatActivity implements StylusStyleDialog.StylusStyleListener, EraserDialog.EraserSizeListener, ActivityResultCallback<ActivityResult>, OnCompleteListener<Void> {
     private BlackboardFragment currentPage;
     private ImageButton stylusButton;
-    private final DialogFragment dialog = new StylusStyleDialog();
+    private final StylusStyleDialog stylusStyleDialog = new StylusStyleDialog();
+    private final EraserDialog eraserDialog = new EraserDialog();
     private ViewPager2 viewPager;
     private BlackboardViewAdapter adapter;
-    private BlackboardView.TOOLS currentTool = BlackboardView.TOOLS.NONE;
+    private BlackboardView.TOOL currentTool = BlackboardView.TOOL.NONE;
     private final ArrayList<BlackboardFragment> pages = new ArrayList<>();
-    private LocalDatabase database;
+    private LocalDatabase localDatabase;
     private int noteID;
-    private int currentColor= Color.BLACK;
+    private int currentColor = Color.BLACK;
     private String noteName;
     private boolean READ_MODE = false;
+    private ImageButton currentSelected;
+    private BorderDrawable drawable = new BorderDrawable();
+    private int currentStrokeWidth;
+    private int currentEraserSize;
+    private ImageButton addPageButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
-        database = new LocalDatabase(this);
+
+        localDatabase = new LocalDatabase(this);
         noteID = getIntent().getIntExtra("id", -1);
         noteName = getIntent().getStringExtra("name");
         String op = getIntent().getStringExtra("op");
@@ -70,14 +79,37 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             return;
         }
 
-        if(op != null && op.equals("READ_ONLY"))
+        if (op != null && op.equals("READ_ONLY"))
             READ_MODE = true;
 
-        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), this);
         viewPager = findViewById(R.id.viewPager);
         adapter = new BlackboardViewAdapter(this);
         viewPager.setAdapter(adapter);
+
+        addPageButton = findViewById(R.id.add_page);
+
+        if(!READ_MODE) {
+            init();
+        }else {
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            ((ViewGroup) toolbar.getParent()).removeView(toolbar);
+            ((ViewGroup) addPageButton.getParent()).removeView(addPageButton);
+        }
+
+        if (content == null)
+            content = localDatabase.getNoteContent(noteID);
+
+        load(content);
+    }
+
+    private void init() {
+        currentColor = localDatabase.getCurrentColor();
+        currentTool = localDatabase.getCurrentInstrument();
+        currentStrokeWidth = localDatabase.getStrokeWidth();
+        currentEraserSize = localDatabase.getEraserSize();
+
+        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), this);
 
         ImageButton eraserButton = findViewById(R.id.eraser_button);
         stylusButton = findViewById(R.id.stylus_button);
@@ -102,16 +134,16 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             }
         });
 
-        ImageButton addPageButton = findViewById(R.id.add_page);
         addPageButton.setOnClickListener(e -> {
             adapter.addPage();
             viewPager.setCurrentItem(adapter.getItemCount(), true);
         });
 
-        findViewById(R.id.hand_button).setOnClickListener(e -> {
-            currentPage.getBlackboard().setTool(BlackboardView.TOOLS.NONE);
-            viewPager.setUserInputEnabled(true);
-            currentTool = BlackboardView.TOOLS.NONE;
+        ImageButton handButton = findViewById(R.id.hand_button);
+        handButton.setOnClickListener(e -> {
+            currentPage.getBlackboard().setTool(BlackboardView.TOOL.NONE);
+            currentTool = BlackboardView.TOOL.NONE;
+            selectedButton(handButton);
         });
 
         undoButton.setOnClickListener(e -> {
@@ -119,42 +151,51 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         });
 
         textButton.setOnClickListener(e -> {
-            currentPage.getBlackboard().setTool(BlackboardView.TOOLS.TEXT);
-            viewPager.setUserInputEnabled(false);
-            currentTool = BlackboardView.TOOLS.TEXT;
+            currentPage.getBlackboard().setTool(BlackboardView.TOOL.TEXT);
+            currentTool = BlackboardView.TOOL.TEXT;
+            selectedButton(textButton);
         });
 
         stylusButton.getDrawable().setTint(currentColor);
         stylusButton.setOnClickListener(e -> {
-            currentTool = BlackboardView.TOOLS.STYLUS;
-            if (currentPage.getBlackboard().getCurrentTool() == BlackboardView.TOOLS.STYLUS) {
-                dialog.show(getSupportFragmentManager(), "Stylus Style Chooser");
+            currentTool = BlackboardView.TOOL.STYLUS;
+            if (currentPage.getBlackboard().getCurrentTool() == BlackboardView.TOOL.STYLUS) {
+                stylusStyleDialog.setLineStroke(currentStrokeWidth);
+                stylusStyleDialog.show(getSupportFragmentManager(), "Stylus Style Chooser");
                 return;
             }
 
-            currentPage.getBlackboard().setTool(BlackboardView.TOOLS.STYLUS);
+            currentPage.getBlackboard().setTool(BlackboardView.TOOL.STYLUS);
             currentPage.getBlackboard().setStrokeColor(currentColor);
-            viewPager.setUserInputEnabled(false);
+            selectedButton(stylusButton);
         });
 
         eraserButton.setOnClickListener(e -> {
-            currentPage.getBlackboard().setTool(BlackboardView.TOOLS.ERASER);
-            viewPager.setUserInputEnabled(false);
-            currentTool = BlackboardView.TOOLS.ERASER;
+            currentTool = BlackboardView.TOOL.ERASER;
+            if (currentPage.getBlackboard().getCurrentTool() == BlackboardView.TOOL.ERASER) {
+                eraserDialog.setCurrentEraserSize(currentEraserSize);
+                eraserDialog.show(getSupportFragmentManager(), "Eraser Style Chooser");
+                return;
+            }
+
+            currentPage.getBlackboard().setTool(BlackboardView.TOOL.ERASER);
+            selectedButton(eraserButton);
         });
 
-        if(READ_MODE) {
-            Toolbar toolbar = findViewById(R.id.toolbar);
-            ((ViewGroup) toolbar.getParent()).removeView(toolbar);
-            ((ViewGroup) addPageButton.getParent()).removeView(addPageButton);
+        switch (currentTool) {
+            case STYLUS:
+                selectedButton(stylusButton);
+                break;
+            case ERASER:
+                selectedButton(eraserButton);
+                break;
+            case TEXT:
+                selectedButton(textButton);
+                break;
         }
-
-        if(content == null)
-            content= database.getNoteContent(noteID);
-        init(content);
     }
 
-    private void init(String content) {
+    private void load(@Nullable String content) {
         if (content != null) {
             try {
                 Object o = deserialize(content);
@@ -178,10 +219,29 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         }
     }
 
+    private void selectedButton(ImageButton button) {
+        float scaleFactor = 1.25f;
+        if (currentSelected != null) {
+            currentSelected.setScaleX(1);
+            currentSelected.setScaleY(1);
+            currentSelected.setBackground(null);
+        }
+
+        drawable.setLeftBorder(5, Color.LTGRAY);
+        drawable.setRightBorder(5, Color.LTGRAY);
+        button.setScaleX(scaleFactor);
+        button.setScaleY(scaleFactor);
+        button.setBackground(drawable);
+        currentSelected = button;
+        localDatabase.saveCurrentInstrument(currentTool);
+        viewPager.setUserInputEnabled(currentTool == BlackboardView.TOOL.NONE);
+    }
+
     @Override
     public void onColorChoosed(DialogFragment dialog, int color) {
         stylusButton.getDrawable().setTint(color);
         currentPage.getBlackboard().setStrokeColor(color);
+        localDatabase.saveColor(color);
         currentColor = color;
         dialog.dismiss();
     }
@@ -189,12 +249,27 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     @Override
     public void onStrokeWidthChoosed(DialogFragment dialog, int strokeWidth) {
         currentPage.getBlackboard().setStrokeWidth(strokeWidth);
+        localDatabase.saveStrokeWidth(strokeWidth);
+        currentStrokeWidth = strokeWidth;
+    }
+
+    @Override
+    public void onEraserSizeChoosed(DialogFragment dialogFragment, int value) {
+        currentPage.getBlackboard().setEraserSize(value);
+        localDatabase.saveEraserSize(value);
+        currentEraserSize = value;
     }
 
     @Override
     public void onBackPressed() {
         save();
         super.onBackPressed();
+    }
+
+    @Override
+    protected void onStop() {
+        save();
+        super.onStop();
     }
 
     public void save() {
@@ -207,17 +282,11 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
 
         try {
             String serializedNote = serialize(note);
-            database.updateNoteContent(noteID, serializedNote);
+            localDatabase.updateNoteContent(noteID, serializedNote);
         } catch (Exception e) {
             Toast.makeText(this, "Errore nel salvataggio della nota", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
-    }
-
-    @Override
-    protected void onStop() {
-        save();
-        super.onStop();
     }
 
     private String serialize(Object o) throws Exception {
@@ -244,6 +313,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             Intent data = result.getData();
             HashMap<String, Object> updateMap = new HashMap<>();
 
+            assert data != null;
             Group.Info info = (Group.Info) data.getSerializableExtra("info");
             Group.Concept c = (Group.Concept) data.getSerializableExtra("concept");
             ArrayList<Object> conceptFiles = (ArrayList<Object>) data.getSerializableExtra("choosedConcept");
@@ -253,17 +323,19 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
 
             String conceptID = c == null ? "root" : c.getId(); // caso in cui l utente voglia condividere la nota nella prima schermata
             updateMap.put(String.format("groups/%s/storage/%s", info.getId(), conceptID), conceptFiles);
-            updateMap.put(String.format("notes/%s", note.getId()), database.getNoteContent(noteID));
+            updateMap.put(String.format("notes/%s", note.getId()), localDatabase.getNoteContent(noteID));
             FirebaseDatabase.getInstance().getReference().updateChildren(updateMap).addOnCompleteListener(this);
         }
     }
 
     @Override
     public void onComplete(@NonNull Task<Void> task) {
-        if(task.isSuccessful())
-            Toast.makeText(this, "Nota condivisa con successo!", Toast.LENGTH_SHORT).show();
-        else
-            Toast.makeText(this, "Errore nella condivisione, riprova", Toast.LENGTH_SHORT).show();
+        View view = getWindow().getDecorView().getRootView();
+
+        if (task.isSuccessful()) {
+            Snackbar.make(view, "Nota condivisa con successo!", Snackbar.LENGTH_SHORT).show();
+        } else
+            Snackbar.make(view, "Errore durante la condivisione.. riprova più tardi", Snackbar.LENGTH_SHORT).show();
     }
 
     private class BlackboardViewAdapter extends FragmentStateAdapter {
@@ -281,8 +353,9 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         }
 
         public void addPage(SerializableNote.Page page) {
-            BlackboardFragment pageFragment = new BlackboardFragment(currentTool, currentColor);
+            BlackboardFragment pageFragment = new BlackboardFragment(currentTool, currentColor, currentStrokeWidth, currentEraserSize);
             pageFragment.setPage(page);
+            pageFragment.setReadMode(READ_MODE);
             pages.add(pageFragment);
             notifyItemInserted(pages.size() - 1);
         }

@@ -1,14 +1,17 @@
 package com.unipi.sam.getnotes.note.utility;
 
 import android.graphics.Path;
+import android.util.Pair;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
+
 public class Stroke extends Path implements Serializable {
     private final int color;
-    private final int strokeWidth;
+    private int strokeWidth;
     private ArrayList<Action> actions = new ArrayList<>();
+    private boolean erase;
 
     public Stroke(int color, int strokeWidth) {
         this.color = color;
@@ -51,6 +54,15 @@ public class Stroke extends Path implements Serializable {
 
     public int getStrokeWidth() {
         return strokeWidth;
+    }
+
+    public void setErase(boolean erase, int size) {
+        this.erase = erase;
+        this.strokeWidth = size;
+    }
+
+    public boolean isBlank() {
+        return erase;
     }
 
     public static class Action implements Serializable {

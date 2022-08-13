@@ -16,13 +16,13 @@ import com.unipi.sam.getnotes.table.User;
 
 public class CreateUserActivity extends AppCompatActivity implements View.OnClickListener{
     private TextInputEditText input;
-    private LocalDatabase localDB = new LocalDatabase(this);
+    private LocalDatabase localDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_user);
-
+        localDB = new LocalDatabase(this);
 
         input = findViewById(R.id.username_input);
         MaterialButton button = findViewById(R.id.register_button);

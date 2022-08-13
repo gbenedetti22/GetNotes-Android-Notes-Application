@@ -40,6 +40,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.firebaseui:firebase-ui-database:8.0.1'
     implementation 'com.google.android.gms:play-services-auth:20.2.0'
+    implementation 'com.github.skydoves:colorpickerview:2.2.4'
     implementation 'androidx.paging:paging-runtime:3.1.1'
     implementation 'com.github.mgbckr:nachos-v2:v1.1.2'
     implementation 'com.github.bmelnychuk:atv:1.2.9'

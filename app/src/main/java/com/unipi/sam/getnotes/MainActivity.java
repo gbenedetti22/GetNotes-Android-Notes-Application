@@ -1,8 +1,6 @@
 package com.unipi.sam.getnotes;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -18,6 +16,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -29,16 +28,11 @@ import com.unipi.sam.getnotes.table.User;
 
 public class MainActivity extends AppCompatActivity implements OnCompleteListener<DataSnapshot>, ActivityResultCallback<ActivityResult> {
     private LocalDatabase localDatabase;
-    private ProgressDialog dialog;
     private GoogleSignInAccount account;
 
     @Override
     protected void onStart() {
         super.onStart();
-        dialog = new ProgressDialog(this);
-        dialog.setIndeterminate(true);
-        dialog.setMessage("Caricamento..");
-        dialog.show();
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if (account != null) {
@@ -47,8 +41,6 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
                 return;
             }
             login(account);
-        }else{
-            dialog.dismiss();
         }
 
     }
@@ -68,7 +60,9 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
                 .build();
 
         GoogleSignInClient signInClient = GoogleSignIn.getClient(this, gso);
-        findViewById(R.id.signIn_button).setOnClickListener((e) -> {
+        SignInButton googleSignInButton = findViewById(R.id.signIn_button);
+
+        googleSignInButton.setOnClickListener((e) -> {
             Intent signInIntent = signInClient.getSignInIntent();
             activityResultLauncher.launch(signInIntent);
         });
@@ -88,7 +82,6 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
     }
 
     private void startHomeActivity() {
-        dialog.dismiss();
         Intent intent = new Intent(this, HomeActivity.class);
         startActivity(intent);
         finish();
@@ -105,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
                 localDatabase.setUser(u);
                 startHomeActivity();
             } else {
-                dialog.dismiss();
                 Intent intent = new Intent(this, CreateUserActivity.class);
                 intent.putExtra("id", account.getId());
                 startActivity(intent);

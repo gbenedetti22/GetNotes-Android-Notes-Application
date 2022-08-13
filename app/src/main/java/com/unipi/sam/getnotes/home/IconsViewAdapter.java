@@ -138,10 +138,6 @@ public class IconsViewAdapter extends RecyclerView.Adapter<IconsViewAdapter.View
             return name;
         }
 
-        public void setId(int id) {
-            this.id = id;
-        }
-
         public void setType(int type) {
             this.type = type;
         }

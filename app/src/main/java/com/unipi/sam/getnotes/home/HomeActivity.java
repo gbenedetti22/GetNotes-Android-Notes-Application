@@ -48,6 +48,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
         database = new LocalDatabase(this);
         renameInput = new TextInputEditText(this);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -61,6 +62,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                 .create();
 
         currentFolderLabel = findViewById(R.id.folderNameTitle);
+        currentFolderName = currentFolderLabel.getText().toString();
         RecyclerView recyclerView = findViewById(R.id.recView);
         recyclerView.setAdapter(viewAdapter);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));

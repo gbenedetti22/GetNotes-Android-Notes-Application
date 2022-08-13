@@ -1,21 +1,18 @@
 package com.unipi.sam.getnotes.groups;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -29,7 +26,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.hootsuite.nachos.NachoTextView;
 import com.hootsuite.nachos.terminator.ChipTerminatorHandler;
 import com.unipi.sam.getnotes.R;
-import com.unipi.sam.getnotes.home.HomeIcon;
 import com.unipi.sam.getnotes.note.NoteActivity;
 import com.unipi.sam.getnotes.table.Group;
 
@@ -37,7 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
+import java.util.Objects;
 
 public class ViewGroupActivity extends AppCompatActivity implements GroupStorageAdapter.OnIconClickListener, ValueEventListener, OnCompleteListener<DataSnapshot> {
     private GroupStorageAdapter adapter = new GroupStorageAdapter();
@@ -105,9 +101,9 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
     }
 
     @Override
-    public void onConceptIconClick(String clickedConceptID, String parentFolder) {
-        history.add(parentFolder);
-        this.currentPosition = clickedConceptID;
+    public void onConceptIconClick(String clickedConceptID, String parentFolderID) {
+        history.add(currentPosition);
+        Log.d("history", history.toString());
         changeFolder(clickedConceptID);
     }
 
@@ -128,6 +124,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         }
 
         changeFolder(history.pollLast());
+        Log.d("history", history.toString());
     }
 
     private void changeFolder(String folder) {
@@ -142,6 +139,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
                 .child("storage")
                 .child(folder);
 
+        this.currentPosition = folder;
         currentConcepts.clear();
         query.addValueEventListener(this);
     }
@@ -150,22 +148,27 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         for (int i = 0; i < files.size(); i++) {
             Object file = files.get(i);
             if (file instanceof HashMap) {
+
+                @SuppressWarnings("unchecked")
                 HashMap<String, Object> map = (HashMap<String, Object>) file;
                 if (map.get("type") == null) continue;
 
-                if (map.get("type").equals("CONCEPT")) {
+                if (Objects.equals(map.get("type"), "CONCEPT")) {
                     Group.Concept concept = Group.Concept.fromMap(map);
+                    if(concept == null) continue;
+
                     files.set(i, concept);
                     currentConcepts.add(concept);
                 }
 
-                if (map.get("type").equals("NOTE")) {
+                if (Objects.equals(map.get("type"), "NOTE")) {
                     files.set(i, Group.Note.fromMap(map));
                 }
             }
         }
     }
 
+    // Funzione chiamata dalla query del metodo changeFolder
     @Override
     public void onDataChange(@NonNull DataSnapshot snapshot) {
         if (snapshot.exists()) {

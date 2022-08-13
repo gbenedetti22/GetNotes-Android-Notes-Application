@@ -4,9 +4,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -25,31 +27,36 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 
-public class BlackboardFragment extends Fragment implements TextWatcher{
+public class BlackboardFragment extends Fragment implements TextWatcher {
     private BlackboardView blackboard;
-    private BlackboardView.TOOLS currentTool;
+    private BlackboardView.TOOL currentTool;
     private int currentColor;
     private ArrayList<Serializable> history = new ArrayList<>();
     private SerializableNote.Page page = new SerializableNote.Page();
-    private EditText title;
+    private int strokeWidth;
+    private int eraserSize;
+    private boolean readMode;
 
     public BlackboardFragment() {
-        currentTool = BlackboardView.TOOLS.NONE;
+        currentTool = BlackboardView.TOOL.NONE;
         currentColor = Color.BLACK;
-        page.setHistory(history);
     }
 
-    public BlackboardFragment(BlackboardView.TOOLS currentTool, int currentColor) {
+    public BlackboardFragment(BlackboardView.TOOL currentTool, int currentColor, int strokeWidth, int eraserSize) {
         this.currentTool = currentTool;
         this.currentColor = currentColor;
-        page.setHistory(history);
+        this.strokeWidth = strokeWidth;
+        this.eraserSize = eraserSize;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN |
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
 
     @Override
@@ -64,10 +71,15 @@ public class BlackboardFragment extends Fragment implements TextWatcher{
         blackboard.setRootLayout(rootLayout);
         blackboard.setTool(currentTool);
         blackboard.setStrokeColor(currentColor);
+        blackboard.setStrokeWidth(strokeWidth);
+        blackboard.setEraserSize(eraserSize);
         blackboard.setHistory(history);
-        title = view.findViewById(R.id.title_label);
+
+        EditText title = view.findViewById(R.id.title_label);
         title.addTextChangedListener(this);
         title.setText(page.getTitle());
+        title.setFocusable(!readMode); // perchè se readMode è a false (quindi NON sono in readMode) devo poter editare, quindi nego
+
         TextView dateText = view.findViewById(R.id.date_label);
         dateText.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
     }
@@ -77,16 +89,16 @@ public class BlackboardFragment extends Fragment implements TextWatcher{
     }
 
     private void setLines(ArrayList<Serializable> lines) {
-        if(lines == null || lines.isEmpty()) return;
+        if (lines == null || lines.isEmpty()) return;
         history.clear();
 
         for (Object o : lines) {
-            if(o instanceof Text) {
+            if (o instanceof Text) {
                 Text t = (Text) o;
                 history.add(t);
             }
 
-            if(o instanceof Stroke) {
+            if (o instanceof Stroke) {
                 Stroke stroke = (Stroke) o;
                 stroke.refresh();
                 history.add(stroke);
@@ -94,12 +106,17 @@ public class BlackboardFragment extends Fragment implements TextWatcher{
         }
     }
 
+    public void setReadMode(boolean readMode) {
+        this.readMode = readMode;
+    }
+
     public SerializableNote.Page getPage() {
+        page.setHistory(history);
         return page;
     }
 
     public void setPage(SerializableNote.Page page) {
-        if(page == null) return;
+        if (page == null) return;
 
         this.page = page;
         setLines(page.getHistory());

@@ -6,10 +6,15 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Color;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.unipi.sam.getnotes.note.BlackboardView;
+import com.unipi.sam.getnotes.note.EraserDialog;
+import com.unipi.sam.getnotes.note.StylusStyleDialog;
 import com.unipi.sam.getnotes.table.User;
 
 import java.text.SimpleDateFormat;
@@ -22,7 +27,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
     private int currentFolderID;
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
     private final String FILES_TABLE_NAME = "Files";
-    private final String CREATE_FILES_TABLE_QUERY =
+    private static final String CREATE_FILES_TABLE_QUERY =
             "CREATE TABLE \"Files\" (\n" +
                     "\t\"id\"\tINTEGER PRIMARY KEY AUTOINCREMENT,\n" +
                     "\t\"parent_folder\"\tINTEGER NOT NULL,\n" +
@@ -32,7 +37,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
                     "\t\"date\"\tTEXT\n" +
                     ");";
 
-    private final String CREATE_ROOT_FOLDER_QUERY = "INSERT INTO Files(id, parent_folder, name, type) VALUES(1, 0, \"root\", \"FOLDER\")";
+    private static final String CREATE_ROOT_FOLDER_QUERY = "INSERT INTO Files(id, parent_folder, name, type) VALUES(1, 0, \"root\", \"FOLDER\")";
 
     public enum SORTING_OPTIONS {
         NAME,
@@ -40,7 +45,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
         TYPE
     }
     private SORTING_OPTIONS sortingOptions;
-    private final String SHARED_PREFERENCE_FILENAME = "UNIPI_GETNOTES_PREFERENCE_FILE";
+    private static final String SHARED_PREFERENCE_FILENAME = "UNIPI_GETNOTES_PREFERENCE_FILE";
 
     private String userId;
     private String name;
@@ -75,15 +80,54 @@ public class LocalDatabase extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_FILES_TABLE_QUERY);
         db.execSQL(CREATE_ROOT_FOLDER_QUERY);
-        db.close();
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + FILES_TABLE_NAME);
         String USER_TABLE_NAME = "User";
+        db.execSQL("DROP TABLE IF EXISTS " + FILES_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + USER_TABLE_NAME);
         onCreate(db);
+    }
+
+    public void saveEraserSize(int value) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("eraser", value);
+        editor.apply();
+    }
+    public int getEraserSize() {
+        return preferences.getInt("eraser", EraserDialog.ERASER_DEFAULT_SIZE);
+    }
+
+    public void saveStrokeWidth(int strokeWidth) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("stroke", strokeWidth);
+        editor.apply();
+    }
+
+    public int getStrokeWidth() {
+        return preferences.getInt("stroke", StylusStyleDialog.DEFAULT_STROKE_WIDTH);
+    }
+
+    public int getCurrentColor() {
+        return preferences.getInt("color", Color.BLACK);
+    }
+
+    public void saveColor(int color) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("color", color);
+        editor.apply();
+    }
+
+    public BlackboardView.TOOL getCurrentInstrument() {
+        String tool = preferences.getString("tool", BlackboardView.TOOL.NONE.name());
+        return BlackboardView.TOOL.valueOf(tool);
+    }
+
+    public void saveCurrentInstrument(BlackboardView.TOOL tool) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("tool", tool.name());
+        editor.apply();
     }
 
     public void setUser(@NonNull User u) {
@@ -111,6 +155,13 @@ public class LocalDatabase extends SQLiteOpenHelper {
 
     public boolean userExist() {
         return userId != null && name != null;
+    }
+
+    public void removeCurrentUser() {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.remove("id");
+        editor.remove("name");
+        editor.apply();
     }
 
     public void clear() {
@@ -184,7 +235,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     private int getPrimaryKeyOfLastInsertedFile() {
-        Cursor cursor = getFiles();
+        Cursor cursor = getFiles(SORTING_OPTIONS.DATE);
         int lastPK = getLastPK(cursor);
         cursor.close();
         return lastPK;
@@ -199,7 +250,10 @@ public class LocalDatabase extends SQLiteOpenHelper {
 
     public void updateNoteContent(int id, String content) {
         SQLiteDatabase db = getWritableDatabase();
-        db.execSQL("UPDATE Files SET content = \"" + content + "\" WHERE id = " + id);
+//        db.execSQL("UPDATE Files SET content = \"" + content + "\" WHERE id = " + id);
+        ContentValues cv = new ContentValues();
+        cv.put("content", content);
+        db.update(FILES_TABLE_NAME, cv, "id = ?", new String[]{String.valueOf(id)});
         db.close();
     }
 
