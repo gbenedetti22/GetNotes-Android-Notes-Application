@@ -103,6 +103,10 @@ public class GroupStorageAdapter extends RecyclerView.Adapter<GroupStorageAdapte
         return files.size();
     }
 
+    public ArrayList<Object> getFiles() {
+        return files;
+    }
+
     public void clear() {
         files.clear();
         notifyDataSetChanged();

@@ -1,5 +1,7 @@
 package com.unipi.sam.getnotes.note.utility;
 
+import androidx.annotation.NonNull;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -29,6 +31,7 @@ public class SerializableNote implements Serializable {
         this.currentPage = currentPage;
     }
 
+    @NonNull
     public ArrayList<Page> getPages() {
         return pages;
     }

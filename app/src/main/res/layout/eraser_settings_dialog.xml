@@ -7,7 +7,7 @@
     <LinearLayout
         android:id="@+id/sliderLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         android:paddingLeft="20dp"
         android:paddingTop="20dp"
@@ -39,6 +39,37 @@
             app:tickVisible="false"
             app:trackColorActive="@color/dark_acquamarine"
             app:trackColorInactive="@color/light_blue_trans" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/normalEraserButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gomma"
+                android:drawableLeft="@drawable/eraser_icon"
+                app:layout_constraintEnd_toStartOf="@+id/lineEraserButton"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lineEraserButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tratto"
+                android:drawableLeft="@drawable/eraser_icon"
+                android:layout_marginLeft="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/normalEraserButton"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
     </LinearLayout>
 

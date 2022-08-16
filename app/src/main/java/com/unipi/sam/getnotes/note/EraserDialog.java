@@ -12,18 +12,35 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.Slider;
 import com.unipi.sam.getnotes.R;
 
-public class EraserDialog extends DialogFragment implements Slider.OnSliderTouchListener, Slider.OnChangeListener{
+public class EraserDialog extends DialogFragment implements Slider.OnSliderTouchListener, Slider.OnChangeListener, View.OnClickListener{
     public static final int ERASER_DEFAULT_SIZE = 30;
     public static final int ERASER_MIN_SIZE = 10;
     public static final int ERASER_MAX_SIZE = 90;
     private int currentEraserSize = -1;
     private View eraserSize;
 
+    @Override
+    public void onClick(View v) {
+        if(v.getId() == R.id.normalEraserButton){
+            if(listener != null)
+                listener.onNormalEraserTypeChoosed(this);
+            return;
+        }
+
+        if(v.getId() == R.id.lineEraserButton){
+            if(listener != null)
+                listener.onLineEraserTypeChoosed(this);
+        }
+    }
+
     public interface EraserSizeListener {
         void onEraserSizeChoosed(DialogFragment dialogFragment, int value);
+        void onNormalEraserTypeChoosed(DialogFragment dialogFragment);
+        void onLineEraserTypeChoosed(DialogFragment dialogFragment);
     }
 
     private EraserSizeListener listener;
@@ -36,6 +53,11 @@ public class EraserDialog extends DialogFragment implements Slider.OnSliderTouch
 
         View view = inflater.inflate(R.layout.eraser_settings_dialog, null);
         builder.setView(view);
+
+        MaterialButton normalEraserButton = view.findViewById(R.id.normalEraserButton);
+        MaterialButton lineEraserButton = view.findViewById(R.id.lineEraserButton);
+        normalEraserButton.setOnClickListener(this);
+        lineEraserButton.setOnClickListener(this);
 
         Slider slider = view.findViewById(R.id.eraserSlider);
         eraserSize = view.findViewById(R.id.eraserSize);

@@ -93,10 +93,10 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
     private void createArguments(List<String> chipValues) {
         HashMap<String, Object> updateMap = new HashMap<>();
         for (String value : chipValues) {
-            currentConcepts.add(new Group.Concept(value));
+            adapter.getFiles().add(new Group.Concept(value));
         }
 
-        updateMap.put(String.format("groups/%s/storage/%s", id, currentPosition), currentConcepts);
+        updateMap.put(String.format("groups/%s/storage/%s", id, currentPosition), adapter.getFiles());
         FirebaseDatabase.getInstance().getReference().updateChildren(updateMap);
     }
 

@@ -9,6 +9,7 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -20,15 +21,18 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.unipi.sam.getnotes.note.utility.SerializableNote;
 import com.unipi.sam.getnotes.note.utility.Stroke;
 import com.unipi.sam.getnotes.note.utility.Text;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class BlackboardView extends View {
     public enum TOOL {
         ERASER,
+        OBJECT_ERASER,
         STYLUS,
         TEXT,
         NONE
@@ -41,14 +45,14 @@ public class BlackboardView extends View {
     private float currentPosX;
     private float currentPosY;
     private Canvas viewCanvas;
-    private Bitmap bitmap;
-    private final Paint brush = new Paint();
+    private Bitmap viewBitmap;
+    private static final Paint brush = new Paint();
     private final Paint ditherPaint = new Paint(Paint.DITHER_FLAG);
     private FrameLayout root;
     private TOOL currentTool;
     private EditText clickedEditText;
     private boolean restoreBlackboard = false;
-    private PorterDuffXfermode clearMode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
+    private static PorterDuffXfermode clearMode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
     private DashPathEffect dashPathEffect = new DashPathEffect(new float[]{60, 20}, 0);
     private int eraserSize = EraserDialog.ERASER_DEFAULT_SIZE;
     private RectF eraseZone = new RectF();
@@ -128,14 +132,6 @@ public class BlackboardView extends View {
         this.currentColor = color;
     }
 
-    public Bitmap getBitmap() {
-        return bitmap;
-    }
-
-    public Canvas getCanvas() {
-        return viewCanvas;
-    }
-
     public void setRootLayout(FrameLayout root) {
         this.root = root;
     }
@@ -150,6 +146,16 @@ public class BlackboardView extends View {
 
     public void setEraserSize(int eraserSize) {
         this.eraserSize = eraserSize;
+    }
+
+    private void erase () {
+        for (int i = 0; i < lines.size(); i++) {
+            Stroke line = lines.get(i);
+            if(line.contains(eraseZone)) {
+                lines.remove(i);
+                return;
+            }
+        }
     }
 
     @Override
@@ -170,6 +176,17 @@ public class BlackboardView extends View {
                 if (event.getAction() == MotionEvent.ACTION_MOVE
                         || event.getAction() == MotionEvent.ACTION_DOWN) {
                     drawStroke(event, x, y, true);
+                    eraseZone.set(x - eraserSize, y - eraserSize, x + eraserSize, y + eraserSize);
+                } else {
+                    eraseZone.setEmpty();
+                }
+                break;
+            }
+
+            case OBJECT_ERASER: {
+                if (event.getAction() == MotionEvent.ACTION_MOVE
+                        || event.getAction() == MotionEvent.ACTION_DOWN) {
+                    erase(); // tutto ciò che è sotto eraser zone viene eliminato. Essendo globale, non necessita il passaggio
                     eraseZone.set(x - eraserSize, y - eraserSize, x + eraserSize, y + eraserSize);
                 } else {
                     eraseZone.setEmpty();
@@ -205,10 +222,10 @@ public class BlackboardView extends View {
         }
 
         for (Stroke line : lines) {
-            drawLine(line);
+            drawLine(line, viewCanvas);
         }
 
-        if (currentTool == TOOL.ERASER) {
+        if (currentTool == TOOL.ERASER || currentTool == TOOL.OBJECT_ERASER) {
             brush.setMaskFilter(null);
             brush.setXfermode(null);
             brush.setStrokeWidth(7);
@@ -218,7 +235,7 @@ public class BlackboardView extends View {
             viewCanvas.drawOval(eraseZone, brush);
         }
 
-        canvas.drawBitmap(bitmap, 0, 0, ditherPaint);
+        canvas.drawBitmap(viewBitmap, 0, 0, ditherPaint);
     }
 
     private void restore(Canvas canvas) {
@@ -236,15 +253,39 @@ public class BlackboardView extends View {
 
             if (o instanceof Stroke) {
                 Stroke line = (Stroke) o;
-                drawLine(line);
+                drawLine(line, viewCanvas);
                 this.lines.add(line);
             }
         }
 
-        canvas.drawBitmap(bitmap, 0, 0, ditherPaint);
+        canvas.drawBitmap(viewBitmap, 0, 0, ditherPaint);
     }
 
-    private void drawLine(Stroke line) {
+    public static void drawPage(Canvas canvas, SerializableNote.Page page) {
+        brush.setColor(Color.BLACK);
+        brush.setTextSize(70);
+        brush.setStrokeWidth(5);
+        brush.setTypeface(null);
+        canvas.drawText(page.getTitle(), 30, 100, brush);
+        ArrayList<Serializable> history = page.getHistory();
+
+        for (Object o : history) {
+            if (o instanceof Text) {
+                Text text = (Text) o;
+                brush.setColor(text.getColor());
+                brush.setTextSize(text.getSize());
+                canvas.drawText(text.getText(), text.getX(), text.getY(), brush);
+            }
+
+            if (o instanceof Stroke) {
+                Stroke line = (Stroke) o;
+                line.refresh();
+                drawLine(line, canvas);
+            }
+        }
+    }
+
+    private static void drawLine(Stroke line, Canvas canvas) {
         brush.setColor(line.getColor());
         brush.setStrokeWidth(line.getStrokeWidth());
         brush.setPathEffect(null);
@@ -256,26 +297,53 @@ public class BlackboardView extends View {
             brush.setMaskFilter(null);
             brush.setXfermode(null);
         }
-        viewCanvas.drawPath(line, brush);
+
+        canvas.drawPath(line, brush);
+//        debugLine(line, canvas);
     }
 
+//    private static void debugLine(Stroke line, Canvas canvas) {
+//        if(!debug) return;
+//
+//        LinkedList<Stroke.Point> points = line.getPoints();
+//        for (int i = 0; i < points.size() - 1; i++) {
+//            brush.setStrokeWidth(10);
+//            brush.setColor(Color.RED);
+//            Stroke.Point p1 = points.get(i);
+//            Stroke.Point p2 = points.get(i + 1);
+//            canvas.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY(), brush);
+//
+//            brush.setColor(Color.BLUE);
+//            brush.setStrokeWidth(4);
+//            ArrayList<RectF> bounds = Stroke.getBounds(p1, p2);
+//            for (RectF rect : bounds)
+//                canvas.drawRect(rect, brush);
+//        }
+//    }
+
     private void setBitmap() {
-        if (bitmap == null) {
-            bitmap = Bitmap.createBitmap(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
-            viewCanvas = new Canvas(bitmap);
+        if (viewBitmap == null) {
+            viewBitmap = Bitmap.createBitmap(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+            viewCanvas = new Canvas(viewBitmap);
         }
     }
 
     private void drawStroke(@NonNull MotionEvent event, float x, float y, boolean erase) {
         switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_DOWN: {
                 Stroke s = touchStart(x, y);
                 if (erase)
                     s.setErase(true, eraserSize * 2);
                 break;
-            case MotionEvent.ACTION_MOVE:
+            }
+            case MotionEvent.ACTION_MOVE: {
                 touchMove(x, y);
                 break;
+            }
+            case MotionEvent.ACTION_UP: {
+                getLastStroke().generatePoints();
+                break;
+            }
         }
     }
 

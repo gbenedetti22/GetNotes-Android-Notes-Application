@@ -25,7 +25,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "storage.db";
     private static final int DB_VERSION = 1;
     private int currentFolderID;
-    private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+    private SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
     private final String FILES_TABLE_NAME = "Files";
     private static final String CREATE_FILES_TABLE_QUERY =
             "CREATE TABLE \"Files\" (\n" +
@@ -88,6 +88,17 @@ public class LocalDatabase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + FILES_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + USER_TABLE_NAME);
         onCreate(db);
+    }
+
+    public void saveCurrentEraserType(BlackboardView.TOOL eraser) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("eraser-type", eraser.name());
+        editor.apply();
+    }
+
+    public BlackboardView.TOOL getCurrentEraserType() {
+        String eraserTypeName = preferences.getString("eraser-type", BlackboardView.TOOL.OBJECT_ERASER.name());
+        return BlackboardView.TOOL.valueOf(eraserTypeName);
     }
 
     public void saveEraserSize(int value) {

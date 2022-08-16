@@ -63,6 +63,14 @@ public class Text implements Serializable, TextWatcher {
         return size;
     }
 
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
     public void refresh() {
         if(eText == null && context == null) return;
 

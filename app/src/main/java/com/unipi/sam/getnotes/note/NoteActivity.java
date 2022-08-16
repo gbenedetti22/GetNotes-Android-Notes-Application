@@ -18,6 +18,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.LruCache;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -36,6 +38,7 @@ import com.unipi.sam.getnotes.table.Group;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -88,9 +91,9 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
 
         addPageButton = findViewById(R.id.add_page);
 
-        if(!READ_MODE) {
+        if (!READ_MODE) {
             init();
-        }else {
+        } else {
             Toolbar toolbar = findViewById(R.id.toolbar);
             ((ViewGroup) toolbar.getParent()).removeView(toolbar);
             ((ViewGroup) addPageButton.getParent()).removeView(addPageButton);
@@ -171,14 +174,15 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         });
 
         eraserButton.setOnClickListener(e -> {
-            currentTool = BlackboardView.TOOL.ERASER;
-            if (currentPage.getBlackboard().getCurrentTool() == BlackboardView.TOOL.ERASER) {
+            currentTool = localDatabase.getCurrentEraserType();
+            if (currentPage.getBlackboard().getCurrentTool() == BlackboardView.TOOL.ERASER
+                    || currentPage.getBlackboard().getCurrentTool() == BlackboardView.TOOL.OBJECT_ERASER) {
                 eraserDialog.setCurrentEraserSize(currentEraserSize);
                 eraserDialog.show(getSupportFragmentManager(), "Eraser Style Chooser");
                 return;
             }
 
-            currentPage.getBlackboard().setTool(BlackboardView.TOOL.ERASER);
+            currentPage.getBlackboard().setTool(localDatabase.getCurrentEraserType());
             selectedButton(eraserButton);
         });
 
@@ -186,6 +190,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             case STYLUS:
                 selectedButton(stylusButton);
                 break;
+            case OBJECT_ERASER:
             case ERASER:
                 selectedButton(eraserButton);
                 break;
@@ -198,9 +203,9 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     private void load(@Nullable String content) {
         if (content != null) {
             try {
-                Object o = deserialize(content);
-                SerializableNote serializableNote = (SerializableNote) o;
+                SerializableNote serializableNote = deserialize(content);
 
+                assert serializableNote != null;
                 int num_pages = serializableNote.getNumberOfPages();
                 ArrayList<SerializableNote.Page> pages = serializableNote.getPages();
 
@@ -261,6 +266,24 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     }
 
     @Override
+    public void onNormalEraserTypeChoosed(DialogFragment dialogFragment) {
+        currentPage.getBlackboard().setTool(BlackboardView.TOOL.ERASER);
+        currentTool = BlackboardView.TOOL.ERASER;
+        localDatabase.saveCurrentInstrument(currentTool);
+        localDatabase.saveCurrentEraserType(BlackboardView.TOOL.ERASER);
+        dialogFragment.dismiss();
+    }
+
+    @Override
+    public void onLineEraserTypeChoosed(DialogFragment dialogFragment) {
+        currentPage.getBlackboard().setTool(BlackboardView.TOOL.OBJECT_ERASER);
+        currentTool = BlackboardView.TOOL.OBJECT_ERASER;
+        localDatabase.saveCurrentInstrument(currentTool);
+        localDatabase.saveCurrentEraserType(BlackboardView.TOOL.OBJECT_ERASER);
+        dialogFragment.dismiss();
+    }
+
+    @Override
     public void onBackPressed() {
         save();
         super.onBackPressed();
@@ -298,13 +321,15 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         return Base64.getEncoder().encodeToString(arrayOut.toByteArray());
     }
 
-    private Object deserialize(String s) throws Exception {
+    public static SerializableNote deserialize(String s) throws IOException, ClassNotFoundException {
         byte[] array = Base64.getDecoder().decode(s);
         ByteArrayInputStream arrayIn = new ByteArrayInputStream(array);
         ObjectInputStream in = new ObjectInputStream(arrayIn);
         Object o = in.readObject();
         in.close();
-        return o;
+
+        if (o instanceof SerializableNote) return (SerializableNote) o;
+        return null;
     }
 
     @Override
