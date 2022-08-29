@@ -37,17 +37,19 @@ public class BlackboardFragment extends Fragment implements TextWatcher {
     private int strokeWidth;
     private int eraserSize;
     private boolean readMode;
+    private BlackboardView.BlackboardSettings settings;
 
     public BlackboardFragment() {
         currentTool = BlackboardView.TOOL.NONE;
         currentColor = Color.BLACK;
     }
 
-    public BlackboardFragment(BlackboardView.TOOL currentTool, int currentColor, int strokeWidth, int eraserSize) {
+    public BlackboardFragment(BlackboardView.BlackboardSettings settings, BlackboardView.TOOL currentTool, int currentColor, int strokeWidth, int eraserSize) {
         this.currentTool = currentTool;
         this.currentColor = currentColor;
         this.strokeWidth = strokeWidth;
         this.eraserSize = eraserSize;
+        this.settings = settings;
     }
 
     @Override
@@ -67,10 +69,7 @@ public class BlackboardFragment extends Fragment implements TextWatcher {
         FrameLayout rootLayout = view.findViewById(R.id.root_layout);
         blackboard = view.findViewById(R.id.blackboard);
         blackboard.setRootLayout(rootLayout);
-        blackboard.setTool(currentTool);
-        blackboard.setStrokeColor(currentColor);
-        blackboard.setStrokeWidth(strokeWidth);
-        blackboard.setEraserSize(eraserSize);
+        blackboard.setSettings(settings);
         blackboard.setHistory(history);
 
         EditText title = view.findViewById(R.id.title_label);
@@ -80,10 +79,6 @@ public class BlackboardFragment extends Fragment implements TextWatcher {
 
         TextView dateText = view.findViewById(R.id.date_label);
         dateText.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
-    }
-
-    public BlackboardView getBlackboard() {
-        return blackboard;
     }
 
     private void setLines(ArrayList<Serializable> lines) {

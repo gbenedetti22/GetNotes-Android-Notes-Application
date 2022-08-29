@@ -9,7 +9,6 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -27,7 +26,6 @@ import com.unipi.sam.getnotes.note.utility.Text;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 public class BlackboardView extends View {
     public enum TOOL {
@@ -35,13 +33,12 @@ public class BlackboardView extends View {
         OBJECT_ERASER,
         STYLUS,
         TEXT,
-        NONE
+        NONE,
+        UNDO
     }
 
     private final ArrayList<Stroke> lines = new ArrayList<>();
     private ArrayList<Serializable> history = new ArrayList<>();
-    private int currentColor = Color.BLACK;
-    private int strokeWidth = StylusStyleDialog.DEFAULT_STROKE_WIDTH;
     private float currentPosX;
     private float currentPosY;
     private Canvas viewCanvas;
@@ -49,13 +46,20 @@ public class BlackboardView extends View {
     private static final Paint brush = new Paint();
     private final Paint ditherPaint = new Paint(Paint.DITHER_FLAG);
     private FrameLayout root;
-    private TOOL currentTool;
     private EditText clickedEditText;
     private boolean restoreBlackboard = false;
     private static PorterDuffXfermode clearMode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
     private DashPathEffect dashPathEffect = new DashPathEffect(new float[]{60, 20}, 0);
-    private int eraserSize = EraserDialog.ERASER_DEFAULT_SIZE;
     private RectF eraseZone = new RectF();
+
+    public interface BlackboardSettings {
+        int getCurrentColor();
+        int getStrokeWidth();
+        TOOL getCurrentTool();
+        int getEraserSize();
+    }
+
+    private BlackboardSettings settings;
 
     public BlackboardView(Context context) {
         super(context);
@@ -77,11 +81,14 @@ public class BlackboardView extends View {
         brush.setDither(true);
         brush.setStrokeCap(Paint.Cap.ROUND);
         brush.setStrokeJoin(Paint.Join.ROUND);
-        currentTool = TOOL.NONE;
+    }
+
+    public void setSettings(BlackboardSettings settings) {
+        this.settings = settings;
     }
 
     private Stroke touchStart(float x, float y) {
-        Stroke stroke = new Stroke(currentColor, strokeWidth);
+        Stroke stroke = new Stroke(settings.getCurrentColor(), settings.getStrokeWidth());
         stroke.moveTo(x, y);
         stroke.lineTo(x, y);
 
@@ -124,28 +131,8 @@ public class BlackboardView extends View {
         restoreBlackboard = true;
     }
 
-    public void setStrokeWidth(int strokeWidth) {
-        this.strokeWidth = strokeWidth;
-    }
-
-    public void setStrokeColor(int color) {
-        this.currentColor = color;
-    }
-
     public void setRootLayout(FrameLayout root) {
         this.root = root;
-    }
-
-    public void setTool(TOOL currentTool) {
-        this.currentTool = currentTool;
-    }
-
-    public TOOL getCurrentTool() {
-        return currentTool;
-    }
-
-    public void setEraserSize(int eraserSize) {
-        this.eraserSize = eraserSize;
     }
 
     private void erase () {
@@ -153,6 +140,7 @@ public class BlackboardView extends View {
             Stroke line = lines.get(i);
             if(line.contains(eraseZone)) {
                 lines.remove(i);
+                history.remove(line);
                 return;
             }
         }
@@ -160,13 +148,15 @@ public class BlackboardView extends View {
 
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent event) {
+        if(settings == null) throw new NullPointerException("settings must be setted before drawing");
+
         float x = event.getX();
         float y = event.getY();
 
         if (event.getAction() == MotionEvent.ACTION_DOWN)
             hideKeyboard();
 
-        switch (currentTool) {
+        switch (settings.getCurrentTool()) {
             case TEXT: {
                 if (event.getAction() == MotionEvent.ACTION_DOWN)
                     addText(x, y);
@@ -176,6 +166,7 @@ public class BlackboardView extends View {
                 if (event.getAction() == MotionEvent.ACTION_MOVE
                         || event.getAction() == MotionEvent.ACTION_DOWN) {
                     drawStroke(event, x, y, true);
+                    int eraserSize = settings.getEraserSize();
                     eraseZone.set(x - eraserSize, y - eraserSize, x + eraserSize, y + eraserSize);
                 } else {
                     eraseZone.setEmpty();
@@ -187,6 +178,7 @@ public class BlackboardView extends View {
                 if (event.getAction() == MotionEvent.ACTION_MOVE
                         || event.getAction() == MotionEvent.ACTION_DOWN) {
                     erase(); // tutto ciò che è sotto eraser zone viene eliminato. Essendo globale, non necessita il passaggio
+                    int eraserSize = settings.getEraserSize();
                     eraseZone.set(x - eraserSize, y - eraserSize, x + eraserSize, y + eraserSize);
                 } else {
                     eraseZone.setEmpty();
@@ -196,6 +188,11 @@ public class BlackboardView extends View {
 
             case STYLUS: {
                 drawStroke(event, x, y, false);
+                break;
+            }
+
+            case UNDO: {
+                undo();
                 break;
             }
 
@@ -225,6 +222,7 @@ public class BlackboardView extends View {
             drawLine(line, viewCanvas);
         }
 
+        TOOL currentTool = settings.getCurrentTool();
         if (currentTool == TOOL.ERASER || currentTool == TOOL.OBJECT_ERASER) {
             brush.setMaskFilter(null);
             brush.setXfermode(null);
@@ -244,9 +242,7 @@ public class BlackboardView extends View {
                 Text text = (Text) o;
                 text.setContext(root.getContext());
                 EditText editText = text.toEditText();
-                editText.setOnClickListener(e -> {
-                    clickedEditText = editText;
-                });
+                editText.setOnClickListener(e -> clickedEditText = editText);
 
                 root.addView(editText);
             }
@@ -333,7 +329,7 @@ public class BlackboardView extends View {
             case MotionEvent.ACTION_DOWN: {
                 Stroke s = touchStart(x, y);
                 if (erase)
-                    s.setErase(true, eraserSize * 2);
+                    s.setErase(true, settings.getEraserSize() * 2);
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
@@ -358,7 +354,7 @@ public class BlackboardView extends View {
 
         history.add(t);
 
-        setTool(TOOL.NONE);
+//        setTool(TOOL.NONE);
         root.addView(text);
 
         showKeyboard(text);

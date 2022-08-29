@@ -1,12 +1,14 @@
 package com.unipi.sam.getnotes.home;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.util.Pair;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -30,6 +32,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
+import com.unipi.sam.getnotes.SaveService;
 import com.unipi.sam.getnotes.groups.GroupsActivity;
 import com.unipi.sam.getnotes.note.BlackboardView;
 import com.unipi.sam.getnotes.note.NoteActivity;
@@ -54,11 +57,16 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     private TextView currentFolderLabel;
     private String currentFolderName = "";
     private FloatingActionButton rootFab;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Attesa salvataggio nota in corso..");
+        progressDialog.setIndeterminate(true);
 
         localDatabase = new LocalDatabase(this);
         renameInput = new TextInputEditText(this);
@@ -77,7 +85,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         RecyclerView recyclerView = findViewById(R.id.recView);
         recyclerView.setAdapter(viewAdapter);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-//        localDatabase.clear();
+        localDatabase.clear();
         setFloatingButtonsAnimation();
         refreshHome();
 
@@ -131,7 +139,19 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                     Intent intent = new Intent(this, NoteActivity.class);
                     intent.putExtra("id", icon.getId());
                     intent.putExtra("name", icon.getName());
-                    startActivity(intent);
+
+                    if(SaveService.isPendingSave(icon.getId())) {
+                        progressDialog.show();
+                        new Thread(() -> {
+                            SaveService.waitFor(icon.getId());
+                            runOnUiThread(() -> {
+                                startActivity(intent);
+                                progressDialog.dismiss();
+                            });
+                        }).start();
+                    }else {
+                        startActivity(intent);
+                    }
                 });
                 break;
         }

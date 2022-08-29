@@ -1,4 +1,4 @@
-package com.unipi.sam.getnotes;
+package com.unipi.sam.getnotes.utility;
 
 import android.graphics.Canvas;
 import android.graphics.Color;

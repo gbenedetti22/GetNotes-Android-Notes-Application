@@ -6,21 +6,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class SerializableNote implements Serializable {
+    private int id;
     private int currentPage;
     private ArrayList<Page> pages;
 
-    public SerializableNote(int currentPage, ArrayList<Page> pages) {
-        this.currentPage = currentPage;
-        this.pages = pages;
-    }
-
-    public SerializableNote(int nPages, int currentPage) {
+    public SerializableNote(int id, int nPages, int currentPage) {
+        this.id = id;
         this.pages = new ArrayList<>(nPages);
         this.currentPage = currentPage;
     }
 
     public SerializableNote() {
-        this(1, 0);
+        this(-1, 1, 0);
     }
 
     public int getCurrentPageIndex() {
@@ -29,6 +26,14 @@ public class SerializableNote implements Serializable {
 
     public void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     @NonNull
@@ -46,6 +51,21 @@ public class SerializableNote implements Serializable {
 
     public int getNumberOfPages() {
         return pages.size();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SerializableNote note = (SerializableNote) o;
+
+        return id == note.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 
     public static class Page implements Serializable {
