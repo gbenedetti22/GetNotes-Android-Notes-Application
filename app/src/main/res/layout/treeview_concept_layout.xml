@@ -25,7 +25,7 @@
             android:layout_marginLeft="15dp"
             android:gravity="center"
             android:text="2 Guerra Mondiale"
-            android:textSize="16dp"
+            android:textSize="@dimen/textSize"
             android:textColor="@color/black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/note_image" />

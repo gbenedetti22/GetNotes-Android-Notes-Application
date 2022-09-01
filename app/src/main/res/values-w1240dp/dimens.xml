@@ -1,3 +1,19 @@
 <resources>
-    <dimen name="fab_margin">200dp</dimen>
+    <dimen name="fab_margin">48dp</dimen>
+    <dimen name="folderIconWidth">82dp</dimen>
+    <dimen name="folderIconHeigth">77dp</dimen>
+    <dimen name="noteIconWidth">65dp</dimen>
+    <dimen name="noteIconHeigth">77dp</dimen>
+    <dimen name="textSize">18sp</dimen>
+    <dimen name="fabSize">106sp</dimen>
+    <dimen name="fabSize2">93dp</dimen>
+    <dimen name="fabIconSize">35sp</dimen>
+    <dimen name="segmentedButtonTextSize">18sp</dimen>
+    <dimen name="homeTitleSize">30sp</dimen>
+    <dimen name="conceptIconSize">82dp</dimen>
+    <dimen name="groupTitleTextSize">26sp</dimen>
+    <dimen name="groupInfoTextSize">21sp</dimen>
+    <dimen name="letterIconSize">33sp</dimen>
+    <dimen name="circleIconSize">58dp</dimen>
+    <dimen name="popupTextSize">25sp</dimen>
 </resources>

@@ -19,16 +19,17 @@ public class Stroke extends Path implements Serializable {
     private ArrayList<Action> actions = new ArrayList<>();
     private LinkedList<Point> capturedPoints = new LinkedList<>();
     private boolean erase;
-    private static final int MAX_RECORD_POINTS = 20;
+    private static final int MAX_RECORD_POINTS = 20; // numero massimo di punti catturati su una linea
 
     public Stroke(int color, int strokeWidth) {
         this.color = color;
         this.strokeWidth = strokeWidth;
     }
 
+    // metodo usato per ricostruire il path
     public void refresh() {
         if (actions.isEmpty()) return;
-        reset();
+        super.reset();
 
         for (Action a : actions) {
             switch (a.action) {
@@ -73,6 +74,9 @@ public class Stroke extends Path implements Serializable {
         return erase;
     }
 
+    // metodo usato per registrare un tot di punti su una linea
+    // E' garantito che sono registrati al più MAX_RECORD_POINTS
+    // Questi punti possono essere usati per vedere se un determinato punto o un rectf appartiene alla linea
     public void generatePoints() {
         int numPoints = actions.size() / MAX_RECORD_POINTS;
         numPoints = Math.max(numPoints, 1);
@@ -82,6 +86,7 @@ public class Stroke extends Path implements Serializable {
         }
     }
 
+    // metodo che, dati 2 punti e un rettangolo restituisce true sse r è tra questi 2 punti, false altrimenti
     private boolean belongstoLine(Point p1, Point p2, RectF r) {
         ArrayList<RectF> bounds = getBounds(p1, p2);
         for (RectF bound : bounds) {
@@ -91,8 +96,18 @@ public class Stroke extends Path implements Serializable {
         return false;
     }
 
+    // Metodo che, dati 2 punti, restituisce una lista di quadrati che stanno tra questi 2 punti
+    /*
+    Dati i punti A e B:
+        A               B
+
+    getBounds(A,B) restituisce:
+       A Q1 Q2 Q3...Qn B
+
+       Dove Q rappresenta un quadrato che ha delle coordinate x,y
+     */
     @NonNull
-    private ArrayList<RectF> getBounds(Point p1, Point p2) {
+    public ArrayList<RectF> getBounds(Point p1, Point p2) {
         int numSquares = MAX_RECORD_POINTS;
         ArrayList<RectF> rectFS = new ArrayList<>(numSquares);
 
@@ -131,9 +146,6 @@ public class Stroke extends Path implements Serializable {
         if (rectF.isEmpty()) return false;
 
         for (int i = 0; i < capturedPoints.size() - 1; i++) {
-            int x = Math.round(rectF.centerX());
-            int y = Math.round(rectF.centerY());
-
             if (belongstoLine(capturedPoints.get(i), capturedPoints.get(i + 1), rectF)) {
                 return true;
             }
@@ -171,10 +183,6 @@ public class Stroke extends Path implements Serializable {
 
         public float getY() {
             return y;
-        }
-
-        public int getAction() {
-            return action;
         }
     }
 

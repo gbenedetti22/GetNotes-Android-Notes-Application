@@ -5,7 +5,6 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -14,6 +13,7 @@ import com.hootsuite.nachos.terminator.ChipTerminatorHandler;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
 import com.unipi.sam.getnotes.table.Group;
+import com.unipi.sam.getnotes.utility.PopupMessage;
 
 import java.util.HashMap;
 
@@ -37,7 +37,7 @@ public class CreateGroupActivity extends AppCompatActivity {
             DatabaseReference database = FirebaseDatabase.getInstance().getReference();
             String groupName = input.getText() == null ? "" : input.getText().toString();
             if(groupName.isEmpty()) {
-                Snackbar.make(submitBtn, "Il nome del gruppo non può essere vuoto", Snackbar.LENGTH_SHORT).show();
+                PopupMessage.show(this, "Il nome del gruppo non può essere vuoto");
                 return;
             }
 

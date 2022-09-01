@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -19,6 +18,7 @@ import com.google.firebase.database.Query;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
 import com.unipi.sam.getnotes.table.Group;
+import com.unipi.sam.getnotes.utility.PopupMessage;
 
 import java.util.HashMap;
 
@@ -58,13 +58,14 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
     public void onGroupClick(Group g) {
         dialog = new AlertDialog.Builder(this)
                 .setMessage("Vuoi unirti a questo gruppo?")
-                .setPositiveButton("Unisciti", (v, i)-> joinGroup(g))
-                .setNegativeButton("Annulla", (v,i)-> OnlineGroupsActivity.this.dialog.dismiss())
+                .setPositiveButton("Unisciti", (v, i) -> joinGroup(g))
+                .setNegativeButton("Annulla", (v, i) -> OnlineGroupsActivity.this.dialog.dismiss())
                 .create();
 
         dialog.show();
     }
 
+    // metodo per entrare dentro un gruppo
     private void joinGroup(Group g) {
         this.groupToJoin = g;
 
@@ -75,10 +76,12 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
 
     @Override
     public void onComplete(@NonNull Task<DataSnapshot> task) {
-        if(task.isSuccessful()) {
+        dialog.dismiss();
+        if (task.isSuccessful()) {
+            // Se già esiste l id dell utente all interno della lista dei miei gruppi, allora vuol dire che già appartengo a quel gruppo
             DataSnapshot snapshot = task.getResult();
-            if(snapshot.exists()){
-                Snackbar.make(getWindow().getDecorView().getRootView(), "Ti sei già unito a questo gruppo!", Snackbar.LENGTH_SHORT).show();
+            if (snapshot.exists()) {
+                PopupMessage.showError(this, "Ti sei già unito a questo gruppo!");
                 return;
             }
 
@@ -87,7 +90,6 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
             updateMap.put(String.format("groupsMembers/%s", groupToJoin.getId()), localDatabase.getUserPairInfo());
             FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
                     .addOnCompleteListener(t2 -> finish());
-            dialog.dismiss();
         }
     }
 }

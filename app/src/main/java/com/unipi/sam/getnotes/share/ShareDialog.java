@@ -53,13 +53,10 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-
-        View view = inflater.inflate(R.layout.share_dialog, null);
-        layout = view.findViewById(R.id.constraintLayoutTreeView);
+        layout = new ConstraintLayout(requireContext());
 
         builder.setMessage("Scegli argomento..");
-        builder.setView(view);
+        builder.setView(layout);
         builder.setPositiveButton("Condividi qui", this);
         builder.setNegativeButton("Annulla", this);
         FirebaseDatabase.getInstance().getReference()
@@ -113,6 +110,7 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
         if (task.isSuccessful()) {
             DataSnapshot snapshot = task.getResult();
             if (snapshot.exists()) {
+                // Siccome salvo i concetti e le note nello stesso nodo di Firebase, quando prendo i dati ottengo un arraylist di hashmap
                 HashMap<String, ArrayList<Object>> storage = snapshot.getValue(new GenericTypeIndicator<HashMap<String, ArrayList<Object>>>() {
                 });
                 if(storage == null) return;
@@ -125,6 +123,7 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
         ((AlertDialog) Objects.requireNonNull(getDialog())).getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(true);
     }
 
+    // stub che, per ogni nodo root, ne costruisce il sottoalbero
     private void buildTree(HashMap<String, ArrayList<Object>> storage) {
         ArrayList<TreeNode> nodes = new ArrayList<>();
 
@@ -144,13 +143,16 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
         createTreeView(root);
     }
 
-
+    // funzione che ricorsivamente costruisce l albero
+    @SuppressWarnings("unchecked")
     private void buildTreeRecursive(Group.Concept concept, TreeNode rootNode, HashMap<String, ArrayList<Object>> storage) {
         if (!storage.containsKey(concept.getId())) {
             return;
         }
 
         ArrayList<Object> objs = storage.get(concept.getId());
+        if(objs == null) return;
+
         for (Object o : objs) {
             Group.Concept c = Group.Concept.fromMap((HashMap<String, Object>) o);
             if(c == null) continue;

@@ -25,4 +25,5 @@
     <color name="background_darkmode">#002B6A</color>
     <color name="appbarColor_darkmode">#A1ACE1</color>
     <color name="searchView_darkmode">#00529D</color>
+    <color name="materialGrey">#333434</color>
 </resources>

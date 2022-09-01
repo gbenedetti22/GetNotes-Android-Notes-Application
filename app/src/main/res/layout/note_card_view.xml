@@ -26,6 +26,7 @@
             android:layout_below="@+id/note_image"
             android:layout_centerHorizontal="true"
             android:gravity="center"
+            android:textSize="@dimen/textSize"
             android:text="Reti"
             android:textColor="@color/black" />
 

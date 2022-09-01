@@ -20,7 +20,7 @@
             android:layout_toEndOf="@+id/icon_layout"
             android:text="Group name"
             android:textColor="@color/black"
-            android:textSize="18dp" />
+            android:textSize="@dimen/groupTitleTextSize" />
 
         <TextView
             android:id="@+id/infoLabel"
@@ -29,7 +29,7 @@
             android:layout_below="@+id/groupName"
             android:layout_toEndOf="@+id/icon_layout"
             android:text="created by: pippo"
-            android:textSize="13dp" />
+            android:textSize="@dimen/groupInfoTextSize" />
 
         <RelativeLayout
             android:id="@+id/icon_layout"
@@ -50,7 +50,7 @@
                 android:layout_centerInParent="true"
                 android:text="T"
                 android:textColor="#ffffff"
-                android:textSize="25dp"
+                android:textSize="@dimen/letterIconSize"
                 android:textStyle="bold" />
         </RelativeLayout>
 

@@ -54,13 +54,12 @@
         android:layout_marginBottom="10dp"
         android:background="@color/light_grey" />
 
-    <GridLayout
+    <com.google.android.flexbox.FlexboxLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/dialog_divider"
-        android:columnCount="6"
-        android:rowCount="3"
-        android:useDefaultMargins="true">
+        app:flexDirection="row"
+        app:flexWrap="wrap">
 
         <ImageButton
             android:id="@+id/color_1"
@@ -143,6 +142,6 @@
             android:src="@drawable/circle" />
 
 
-    </GridLayout>
+    </com.google.android.flexbox.FlexboxLayout>
 
 </RelativeLayout>

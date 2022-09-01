@@ -41,7 +41,6 @@ public class CachedList<T> implements RemovalListener<Integer, T>, Iterable<T> {
     private Factory<T> factory;
 
     public CachedList(int maxCapacity) {
-        setCacheDirectory(null);
         initCache(maxCapacity);
     }
 
@@ -52,7 +51,6 @@ public class CachedList<T> implements RemovalListener<Integer, T>, Iterable<T> {
     }
 
     public CachedList(int maxCapacity, Factory<T> factory) {
-        setCacheDirectory(null);
         this.factory = factory;
         initCache(maxCapacity);
     }
@@ -71,13 +69,30 @@ public class CachedList<T> implements RemovalListener<Integer, T>, Iterable<T> {
         return items;
     }
 
+    public void refresh(int from, int to) {
+        if(from == to)
+            refresh(from);
+
+        for (int i = from; i < to; i++) {
+            refresh(i);
+        }
+    }
+
+    public int internalSize() {
+        return (int) cache.size();
+    }
+
+    public LoadingCache<Integer, T> getCache() {
+        return cache;
+    }
+
     public void setCacheDirectory(File cacheDir) {
         this.cacheDir = (cacheDir == null ? new File(Environment.getExternalStorageDirectory() + File.separator + "cache-list") : cacheDir);
 
         if (!this.cacheDir.exists()) {
             try {
                 boolean created = this.cacheDir.mkdirs();
-                if (!created) throw new FileNotFoundException("Cannot create file");
+                if (!created) throw new FileNotFoundException("Cannot create: " + cacheDir.getName());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -113,12 +128,20 @@ public class CachedList<T> implements RemovalListener<Integer, T>, Iterable<T> {
         write(index, t);
     }
 
+    public void refresh(int currentPage) {
+        cache.refresh(currentPage);
+    }
+
     public T get(int index) {
         try {
             return cache.get(index, ()-> read(index));
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void evictAll() {
+        cache.invalidateAll();
     }
 
     private void write(int index, T t) {
@@ -148,6 +171,9 @@ public class CachedList<T> implements RemovalListener<Integer, T>, Iterable<T> {
             ObjectInputStream in = new ObjectInputStream(fin);
             Object o = in.readObject();
             in.close();
+
+            if(o != null && items <= index)
+                items = index + 1;
 
             if (factory != null) {
                 return factory.getElement((Serializable) o);
@@ -196,11 +222,6 @@ public class CachedList<T> implements RemovalListener<Integer, T>, Iterable<T> {
     public void onRemoval(RemovalNotification<Integer, T> rn) {
         if (rn.getKey() == null) return;
 
-        Log.d("espelled", String.valueOf(rn.getKey()));
-        if(rn.getValue() instanceof BlackboardFragment) {
-            BlackboardFragment bbf = (BlackboardFragment) rn.getValue();
-            Log.d("lines", rn.getKey() + ": " + bbf.getPage().getHistory().size());
-        }
         write(rn.getKey(), rn.getValue());
     }
 

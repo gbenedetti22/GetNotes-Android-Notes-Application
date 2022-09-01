@@ -24,7 +24,7 @@
                     android:id="@+id/folderNameTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="20sp"
+                    android:textSize="@dimen/homeTitleSize"
                     android:textColor="@color/white"
                     android:text="GetNotes"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -65,7 +65,7 @@
             android:padding="8dp"
             app:selectedTextColor="@color/black"
             app:text="Nome"
-            app:textSize="12sp"
+            app:textSize="@dimen/segmentedButtonTextSize"
             app:textColor="@color/black" />
 
         <com.addisonelliott.segmentedbutton.SegmentedButton
@@ -73,7 +73,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="8dp"
-            app:textSize="12sp"
+            app:textSize="@dimen/segmentedButtonTextSize"
             app:text="Data"
             app:selectedTextColor="@color/black"
             app:textColor="@color/black" />
@@ -85,7 +85,7 @@
             android:padding="8dp"
             app:text="Tipo"
             app:selectedTextColor="@color/black"
-            app:textSize="12sp"
+            app:textSize="@dimen/segmentedButtonTextSize"
             app:textColor="@color/black" />
     </com.addisonelliott.segmentedbutton.SegmentedButtonGroup>
 
@@ -108,6 +108,9 @@
         android:backgroundTint="@color/soft_purple"
         app:borderWidth="0dp"
         app:elevation="0dp"
+        android:scaleType="center"
+        app:fabCustomSize="@dimen/fabSize2"
+        app:maxImageSize="@dimen/fabIconSize"
         app:srcCompat="@drawable/pen_icon" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -120,6 +123,9 @@
         android:backgroundTint="@color/dark_pink"
         app:borderWidth="0dp"
         app:elevation="0dp"
+        android:scaleType="center"
+        app:fabCustomSize="@dimen/fabSize2"
+        app:maxImageSize="@dimen/fabIconSize"
         app:srcCompat="@drawable/add_folder_icon" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -132,6 +138,9 @@
         android:backgroundTint="@color/acquamarine"
         app:borderWidth="0dp"
         app:elevation="0dp"
+        android:scaleType="center"
+        app:fabCustomSize="@dimen/fabSize2"
+        app:maxImageSize="@dimen/fabIconSize"
         app:srcCompat="@drawable/network_icon" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -145,8 +154,11 @@
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="@dimen/fab_margin"
         android:backgroundTint="@color/dark_acquamarine"
+        android:scaleType="center"
         app:borderWidth="0dp"
         app:elevation="0dp"
+        app:fabCustomSize="@dimen/fabSize"
+        app:maxImageSize="@dimen/fabIconSize"
         app:srcCompat="@drawable/add_icon" />
 
 </RelativeLayout>

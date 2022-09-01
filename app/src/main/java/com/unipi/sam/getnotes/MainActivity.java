@@ -18,7 +18,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
@@ -34,8 +36,12 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
     protected void onStart() {
         super.onStart();
 
+        // Se l utente ha già eseguito il login, viene rimandato alla home e l activity viene chiusa qua
+        // altrimenti, si prosegue
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if (account != null) {
+            // Se l utente esiste localmente, viene rimandato alla sua home, altrimenti le informazioni vengono
+            // prese dal database e salvate
             if(localDatabase.userExist()) {
                 startHomeActivity();
                 return;
@@ -54,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
         ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this);
 
+        // login tramite google
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestId()
                 .requestEmail()
@@ -69,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
 
     }
 
+    // metodo per reperire le informazioni sull utente dal Database
     private void login(GoogleSignInAccount account) {
         if (account.getId() == null) {
             Toast.makeText(this, "Devi eseguire l accesso per poter usare l app", Toast.LENGTH_SHORT).show();
@@ -78,7 +86,8 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
         DatabaseReference database = FirebaseDatabase.getInstance().getReference().child("users").child(account.getId());
         database.keepSynced(true);
 
-        database.get().addOnCompleteListener(this);
+        Task<DataSnapshot> task = database.get();
+        task.addOnCompleteListener(this);
     }
 
     private void startHomeActivity() {
@@ -105,6 +114,9 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
             }
         } else {
             Toast.makeText(this, "Impossibile contattare il Server, riprovare più tardi", Toast.LENGTH_LONG).show();
+            if(task.getException() == null) return;
+
+            task.getException().printStackTrace();
         }
     }
 

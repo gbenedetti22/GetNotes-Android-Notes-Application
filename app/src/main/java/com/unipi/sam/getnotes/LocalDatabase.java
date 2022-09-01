@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,7 +19,14 @@ import com.unipi.sam.getnotes.table.User;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Set;
+/*
+    Classe che permette la memorizzazione locale dei dati.
+    In particolare si occupa della gestione del database per note e cartelle e dei settaggi dell utente
+    (es. colore del tratto scelto, grandezza del tratto, strumento corrente ecc)
 
+    Dove possibile, i cursori usati e i riferimenti al database vengono chiusi
+ */
 public class LocalDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "storage.db";
     private static final int DB_VERSION = 1;
@@ -91,9 +97,10 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     public void saveCurrentEraserType(BlackboardView.TOOL eraser) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("eraser-type", eraser.name());
-        editor.apply();
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putString("eraser-type", eraser.name());
+//        editor.apply();
+        save("eraser-type", eraser.name());
     }
 
     public BlackboardView.TOOL getCurrentEraserType() {
@@ -102,18 +109,52 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     public void saveEraserSize(int value) {
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putInt("eraser", value);
+//        editor.apply();
+        save("eraser", value);
+    }
+
+    public int getInt(String key, int defValue) {
+        return preferences.getInt(key, defValue);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void save(String key, Object value) {
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("eraser", value);
+
+        // In Java 8 non esiste il pattern-matching con instanceOf (purtroppo)
+        if(value instanceof String) {
+            editor.putString(key, (String) value);
+        }else if(value instanceof Integer) {
+            editor.putInt(key, (Integer) value);
+        }else if(value instanceof Long) {
+            editor.putLong(key, (Long) value);
+        }else if(value instanceof Float) {
+            editor.putFloat(key, (Float) value);
+        }else if(value instanceof Set<?>) {
+            Set<?> set = (Set<?>) value;
+            for (Object o : set) {
+                if(!(o instanceof String)) throw new IllegalArgumentException("set must be a set of string");
+            }
+            editor.putStringSet(key, (Set<String>) value);
+        }else if(value instanceof Boolean) {
+            editor.putBoolean(key, (Boolean) value);
+        }
+
+
         editor.apply();
     }
+
     public int getEraserSize() {
         return preferences.getInt("eraser", EraserDialog.ERASER_DEFAULT_SIZE);
     }
 
     public void saveStrokeWidth(int strokeWidth) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("stroke", strokeWidth);
-        editor.apply();
+        save("stroke", strokeWidth);
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putInt("stroke", strokeWidth);
+//        editor.apply();
     }
 
     public int getStrokeWidth() {
@@ -125,9 +166,10 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     public void saveColor(int color) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("color", color);
-        editor.apply();
+        save("color", color);
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putInt("color", color);
+//        editor.apply();
     }
 
     public BlackboardView.TOOL getCurrentInstrument() {
@@ -136,16 +178,20 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     public void saveCurrentInstrument(BlackboardView.TOOL tool) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("tool", tool.name());
-        editor.apply();
+        save("tool", tool.name());
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putString("tool", tool.name());
+//        editor.apply();
     }
 
     public void setUser(@NonNull User u) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("id", u.getId());
-        editor.putString("name", u.getName());
-        editor.apply();
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putString("id", u.getId());
+//        editor.putString("name", u.getName());
+//        editor.apply();
+
+        save("id", u.getId());
+        save("name", u.getId());
     }
 
     public String getUserId() {
@@ -168,13 +214,6 @@ public class LocalDatabase extends SQLiteOpenHelper {
         return userId != null && name != null;
     }
 
-    public void removeCurrentUser() {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.remove("id");
-        editor.remove("name");
-        editor.apply();
-    }
-
     public void clear() {
         onUpgrade(getWritableDatabase(), DB_VERSION, DB_VERSION);
     }
@@ -183,9 +222,14 @@ public class LocalDatabase extends SQLiteOpenHelper {
         this.currentFolderID = currentFolderID;
     }
 
+    public int getCurrentFolderID() {
+        return currentFolderID;
+    }
+
     public String now() {
         return sdf.format(new Date());
     }
+
     public int addNote(String name, String content) throws Exception {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -226,9 +270,10 @@ public class LocalDatabase extends SQLiteOpenHelper {
 
     public void setSortingOptions(SORTING_OPTIONS sortingOptions) {
         this.sortingOptions = sortingOptions;
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("sortingOptions", sortingOptions.name());
-        editor.apply();
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putString("sortingOptions", sortingOptions.name());
+//        editor.apply();
+        save("sortingOptions", sortingOptions.name());
     }
 
     public SORTING_OPTIONS getSortingOptions() {

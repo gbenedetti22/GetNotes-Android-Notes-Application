@@ -1,9 +1,10 @@
 package com.unipi.sam.getnotes.note;
 
-import android.graphics.Color;
+import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,26 +30,15 @@ import java.util.Locale;
 
 
 public class BlackboardFragment extends Fragment implements TextWatcher {
-    private BlackboardView blackboard;
-    private BlackboardView.TOOL currentTool;
-    private int currentColor;
-    private ArrayList<Serializable> history = new ArrayList<>();
+    private ArrayList<Serializable> history = new ArrayList<>(); // questa è condivisa tra la view e questo fragment
     private SerializableNote.Page page = new SerializableNote.Page();
-    private int strokeWidth;
-    private int eraserSize;
     private boolean readMode;
     private BlackboardView.BlackboardSettings settings;
 
     public BlackboardFragment() {
-        currentTool = BlackboardView.TOOL.NONE;
-        currentColor = Color.BLACK;
     }
 
-    public BlackboardFragment(BlackboardView.BlackboardSettings settings, BlackboardView.TOOL currentTool, int currentColor, int strokeWidth, int eraserSize) {
-        this.currentTool = currentTool;
-        this.currentColor = currentColor;
-        this.strokeWidth = strokeWidth;
-        this.eraserSize = eraserSize;
+    public BlackboardFragment(BlackboardView.BlackboardSettings settings) {
         this.settings = settings;
     }
 
@@ -65,9 +55,11 @@ public class BlackboardFragment extends Fragment implements TextWatcher {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle bundle) {
+        restore(bundle);
+
         FrameLayout rootLayout = view.findViewById(R.id.root_layout);
-        blackboard = view.findViewById(R.id.blackboard);
+        BlackboardView blackboard = view.findViewById(R.id.blackboard);
         blackboard.setRootLayout(rootLayout);
         blackboard.setSettings(settings);
         blackboard.setHistory(history);
@@ -79,6 +71,18 @@ public class BlackboardFragment extends Fragment implements TextWatcher {
 
         TextView dateText = view.findViewById(R.id.date_label);
         dateText.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void restore(Bundle bundle) {
+        if(bundle== null || bundle.isEmpty()) return;
+
+        ArrayList<Serializable> lines = (ArrayList<Serializable>) bundle.getSerializable("lines");
+        if(lines != null)
+            setLines(lines);
+
+        if(settings == null)
+            settings = (BlackboardView.BlackboardSettings) requireActivity();
     }
 
     private void setLines(ArrayList<Serializable> lines) {

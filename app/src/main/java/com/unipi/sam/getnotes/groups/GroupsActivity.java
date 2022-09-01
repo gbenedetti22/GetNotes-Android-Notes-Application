@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,13 +40,16 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
     private String queryText = "";
     private boolean SHARE_MODE = false;
     private LocalDatabase localDatabase;
+    private SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_groups);
+
+        // La SHARE_MODE indica che l utente ha richiesto di condividere una nota e che deve scegliere un gruppo su cui condividerla
         String opmode = getIntent().getStringExtra("op");
-        if(opmode != null && opmode.equals("SHARE_MODE")) {
+        if (opmode != null && opmode.equals("SHARE_MODE")) {
             SHARE_MODE = true;
         }
 
@@ -53,7 +57,8 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
 
         RecyclerView recyclerView = findViewById(R.id.groups_view);
         searchOnlineTextView = findViewById(R.id.search_online);
-        SearchView searchView = findViewById(R.id.searchView);
+        searchView = findViewById(R.id.searchView);
+        TextView titleLabel = findViewById(R.id.titleGroupsLabel);
 
         searchOnlineTextView.setOnClickListener(v -> {
             Intent intent = new Intent(this, OnlineGroupsActivity.class);
@@ -74,14 +79,15 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
         recyclerView.setAdapter(adapter);
         searchView.setOnQueryTextListener(this);
 
-        query.addValueEventListener(this);
+        query.addValueEventListener(this); // per il risultato vedi -> onDataChange()
 
         ImageButton addGroupBtn = findViewById(R.id.add_group_btn);
-        if(SHARE_MODE){
-            ((ViewGroup)addGroupBtn.getParent()).removeView(addGroupBtn);
+        if (SHARE_MODE) {
+            ((ViewGroup) addGroupBtn.getParent()).removeView(addGroupBtn);
             return;
         }
 
+        titleLabel.setVisibility(View.GONE);
         addGroupBtn.setOnClickListener(v -> {
             Intent intent = new Intent(this, CreateGroupActivity.class);
             startActivity(intent);
@@ -90,11 +96,17 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
 
     @Override
     public boolean onQueryTextSubmit(String query) {
-        return false;
+        searchGroup(query);
+        return true;
     }
 
     @Override
     public boolean onQueryTextChange(String newText) {
+        searchGroup(newText);
+        return true;
+    }
+
+    private void searchGroup(String newText) {
         if (newText.isEmpty()) {
             searchOnlineTextView.setVisibility(View.GONE);
         } else {
@@ -112,41 +124,41 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
         }
 
         adapter.setGroups(filteredGroups);
-        return true;
     }
 
+    // Callbacks chiamata quando l utente clicca su un gruppo
+    // Se si è in SHARE_MODE allora viene aperto il dialog di condivisione, altrimenti il gruppo viene visualizzato
     @Override
     public void OnGroupClick(Group.Info g) {
-        if(SHARE_MODE) {
+        if (SHARE_MODE) {
             ShareDialog dialog = new ShareDialog(g);
             dialog.show(getSupportFragmentManager(), "Share on Concept");
             return;
         }
+
         Intent intent = new Intent(this, ViewGroupActivity.class);
         intent.putExtra("id", g.getId());
         intent.putExtra("groupName", g.getGroupName());
-        if(!g.getAuthorId().equals(localDatabase.getUserId())) {
+        if (!g.getAuthorId().equals(localDatabase.getUserId())) {
             intent.putExtra("op", "READ_ONLY");
         }
+        searchView.setQuery("", true);
+        searchView.clearFocus();
         startActivity(intent);
     }
 
     @Override
     public void onDataChange(@NonNull DataSnapshot snapshot) {
-        if(snapshot.exists()) {
+        if (snapshot.exists()) {
             GenericTypeIndicator<HashMap<String, Group.Info>> typeIndicator = new GenericTypeIndicator<HashMap<String, Group.Info>>() {
             };
             HashMap<String, Group.Info> serverGroups = snapshot.getValue(typeIndicator);
-            Log.d("result", snapshot.getValue().toString());
 
             assert serverGroups != null;
             groups = new ArrayList<>(serverGroups.values());
-            groups.sort(null);
+            groups.sort(null); // ordino per data
             adapter.setGroups(groups);
-            return;
         }
-
-        Log.d("result", "not exist");
     }
 
     @Override
@@ -154,12 +166,14 @@ public class GroupsActivity extends AppCompatActivity implements SearchView.OnQu
 
     }
 
+    // Callback chiamata dal Dialog di scelta del concept. Viene passato quale gruppo è stato scelto, il concetto e la lista dei files
+    // di quel concetto (è più uno stub, in quanto tutte queste variabili vengono poi passate e processate da NoteActivity)
     @Override
     public void onGroupChoosed(Group.Info info, Group.Concept g, ArrayList<Object> conceptFiles) {
         Intent intent = new Intent();
         intent.putExtra("info", info);
-        intent.putExtra("concept", g);
-        intent.putExtra("choosedConcept", conceptFiles == null ? new ArrayList<>() : conceptFiles);
+        intent.putExtra("choosedConcept", g);
+        intent.putExtra("conceptFiles", conceptFiles == null ? new ArrayList<>() : conceptFiles);
         setResult(Activity.RESULT_OK, intent);
         finish();
     }

@@ -10,6 +10,6 @@
         android:type="linear" />
 
     <size
-        android:width="40dp"
-        android:height="40dp"/>
+        android:width="@dimen/circleIconSize"
+        android:height="@dimen/circleIconSize"/>
 </shape>

@@ -24,10 +24,11 @@
         <entry key="app/src/main/res/drawable/text_icon.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/undo.xml" value="0.259" />
         <entry key="app/src/main/res/drawable/undo_icon.xml" value="0.259" />
+        <entry key="app/src/main/res/layout-land/activity_home.xml" value="0.33" />
         <entry key="app/src/main/res/layout-night/activity_create_group.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout-night/activity_create_user.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout-night/activity_groups.xml" value="0.34479166666666666" />
-        <entry key="app/src/main/res/layout-night/activity_home.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-night/activity_home.xml" value="0.3394871794871795" />
         <entry key="app/src/main/res/layout-night/activity_main.xml" value="0.33" />
         <entry key="app/src/main/res/layout-night/activity_note.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout-night/activity_online_groups.xml" value="0.34479166666666666" />
@@ -39,9 +40,11 @@
         <entry key="app/src/main/res/layout-night/note_card_view.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout-night/stylus_settings_dialog.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout-night/treeview_concept_layout.xml" value="0.34479166666666666" />
+        <entry key="app/src/main/res/layout-sw600dp-land/activity_home.xml" value="0.33203125" />
+        <entry key="app/src/main/res/layout-sw600dp/activity_home.xml" value="0.25859375" />
         <entry key="app/src/main/res/layout/activity_create_group.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_create_user.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/activity_groups.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_groups.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_home.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/activity_note.xml" value="0.25" />
@@ -52,11 +55,11 @@
         <entry key="app/src/main/res/layout/content_home.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/eraser_settings_dialog.xml" value="0.33" />
         <entry key="app/src/main/res/layout/folder_card_view.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/fragment_blackboard.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_blackboard.xml" value="0.1" />
         <entry key="app/src/main/res/layout/group_card_view.xml" value="0.34375" />
         <entry key="app/src/main/res/layout/header_layout.xml" value="0.34375" />
         <entry key="app/src/main/res/layout/layout_card_view.xml" value="0.34375" />
-        <entry key="app/src/main/res/layout/note_card_view.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/note_card_view.xml" value="0.25" />
         <entry key="app/src/main/res/layout/note_icon.xml" value="0.3302083333333333" />
         <entry key="app/src/main/res/layout/shape_colored_circle.xml" value="0.34479166666666666" />
         <entry key="app/src/main/res/layout/share_dialog.xml" value="0.34479166666666666" />

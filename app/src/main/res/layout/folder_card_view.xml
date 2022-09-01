@@ -22,13 +22,14 @@
 
         <TextView
             android:id="@+id/folder_label"
-            android:layout_below="@+id/folder_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_below="@+id/folder_image"
             android:layout_centerHorizontal="true"
-            android:textColor="@color/black"
-            android:text="Reti" />
+            android:gravity="center"
+            android:textSize="@dimen/textSize"
+            android:text="Reti"
+            android:textColor="@color/black" />
 
     </RelativeLayout>
 

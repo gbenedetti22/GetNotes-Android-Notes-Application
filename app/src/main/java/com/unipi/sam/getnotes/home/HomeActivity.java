@@ -8,8 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
-import android.util.Pair;
+import android.os.Parcelable;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,7 +27,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.addisonelliott.segmentedbutton.SegmentedButton;
 import com.addisonelliott.segmentedbutton.SegmentedButtonGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.unipi.sam.getnotes.LocalDatabase;
 import com.unipi.sam.getnotes.R;
@@ -37,6 +35,8 @@ import com.unipi.sam.getnotes.groups.GroupsActivity;
 import com.unipi.sam.getnotes.note.BlackboardView;
 import com.unipi.sam.getnotes.note.NoteActivity;
 import com.unipi.sam.getnotes.note.utility.SerializableNote;
+import com.unipi.sam.getnotes.utility.Pair;
+import com.unipi.sam.getnotes.utility.PopupMessage;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,7 +48,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     private boolean isFabMenuOpened = false;
     private LocalDatabase localDatabase;
     private final IconsViewAdapter viewAdapter = new IconsViewAdapter(this);
-    private final LinkedList<Pair<Integer, String>> history = new LinkedList<>();
+    private LinkedList<Pair<Integer, String>> history = new LinkedList<>(); // queue che rappresenta la cronologia delle cartelle aperte -> usata per quando l utente vuole tornare indietro
     private FloatingActionButton penFab, addFolderFab, networkFab;
     private SegmentedButtonGroup buttonGroup;
     private HashMap<Integer, IconsViewAdapter.ViewHolder> icons = new HashMap<>();
@@ -56,8 +56,8 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     private TextInputEditText renameInput;
     private TextView currentFolderLabel;
     private String currentFolderName = "";
-    private FloatingActionButton rootFab;
-    private ProgressDialog progressDialog;
+    private ProgressDialog progressDialog; // dialog usato come "attesa" -> se l utente tenta di aprire una nota che è in corso di salvataggio, viene mostrato
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +67,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Attesa salvataggio nota in corso..");
         progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(false);
 
         localDatabase = new LocalDatabase(this);
         renameInput = new TextInputEditText(this);
@@ -82,10 +83,10 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
 
         currentFolderLabel = findViewById(R.id.folderNameTitle);
         currentFolderName = currentFolderLabel.getText().toString();
-        RecyclerView recyclerView = findViewById(R.id.recView);
+        recyclerView = findViewById(R.id.recView);
         recyclerView.setAdapter(viewAdapter);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-        localDatabase.clear();
+        recyclerView.setLayoutManager(new GridLayoutManager(this, getResources().getInteger(R.integer.homeIconsNumber)));
+//        localDatabase.clear(); // debug
         setFloatingButtonsAnimation();
         refreshHome();
 
@@ -103,6 +104,29 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                 buttonGroup.setPosition(2, false);
                 break;
         }
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        if (recyclerView.getLayoutManager() == null) return;
+
+        Parcelable parcelable = recyclerView.getLayoutManager().onSaveInstanceState();
+        outState.putParcelable("recView", parcelable);
+        outState.putSerializable("currentFolderId", localDatabase.getCurrentFolderID());
+        outState.putSerializable("history", history);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        moveToFolder((Integer) savedInstanceState.getSerializable("currentFolderId"));
+        this.history = (LinkedList<Pair<Integer, String>>) savedInstanceState.getSerializable("history");
+
+        if (recyclerView.getLayoutManager() == null) return;
+        recyclerView.getLayoutManager().onRestoreInstanceState(savedInstanceState.getBundle("recView"));
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override
@@ -120,6 +144,8 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         }
     }
 
+    // Metodo chiamato quando il RecyclerView ha creato un icona
+    // Ogni icona ha associato un id, utile per aprire cartelle o reperire il contenuto delle note dal Database
     @Override
     public void onIconCreated(IconsViewAdapter.ViewHolder icon) {
         icons.put(icon.getId(), icon);
@@ -140,7 +166,8 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                     intent.putExtra("id", icon.getId());
                     intent.putExtra("name", icon.getName());
 
-                    if(SaveService.isPendingSave(icon.getId())) {
+                    // Se tento di aprire una nota che si sta salvando, attendo..
+                    if (SaveService.isPendingSave(icon.getId())) {
                         progressDialog.show();
                         new Thread(() -> {
                             SaveService.waitFor(icon.getId());
@@ -149,7 +176,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                                 progressDialog.dismiss();
                             });
                         }).start();
-                    }else {
+                    } else {
                         startActivity(intent);
                     }
                 });
@@ -164,12 +191,14 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         IconsViewAdapter.ViewHolder holder = (IconsViewAdapter.ViewHolder) v.getTag();
         menu.add(Menu.NONE, holder.getId(), Menu.NONE, "Rinomina");
 
-        if(holder.getType() == HomeIcon.TYPE_NOTE)
+        if (holder.getType() == HomeIcon.TYPE_NOTE)
             menu.add(2, holder.getId(), Menu.NONE, "Salva come PDF");
     }
 
     private File externalStorageFolder = Environment.getExternalStorageDirectory();
 
+    // Per capire quale pulsante del menù è stato cliccato, viene usato il groupID
+    // l id viene usato per reperire il viewholder da una hashmap
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         if (item.getGroupId() == Menu.NONE) {
@@ -189,9 +218,9 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
             return true;
         }
 
-        if(item.getGroupId() == 2) {
+        if (item.getGroupId() == 2) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-            ||  ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
                 return false;
             }
@@ -199,11 +228,12 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
             IconsViewAdapter.ViewHolder holder = icons.get(item.getItemId());
             assert holder != null;
             String content = localDatabase.getNoteContent(holder.getId());
-            if(content != null) {
+            // Creazione del pdf
+            if (content != null) {
                 try {
                     SerializableNote note = NoteActivity.deserialize(content);
-                    if(note == null) {
-                        Snackbar.make(getWindow().getDecorView().getRootView(), "Nota non valida", Snackbar.LENGTH_SHORT).show();
+                    if (note == null) {
+                        PopupMessage.show(this, "Nota non valida");
                         return false;
                     }
 
@@ -225,9 +255,9 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                     document.writeTo(out);
                     out.close();
                     document.close();
-                    Snackbar.make(getWindow().getDecorView().getRootView(), "Pdf creato nella cartella di root", Snackbar.LENGTH_SHORT).show();
+                    PopupMessage.show(this, "Pdf salvato nell archivio!");
                 } catch (IOException | ClassNotFoundException e) {
-                    Snackbar.make(getWindow().getDecorView().getRootView(), "Errore nel salvataggio della nota", Snackbar.LENGTH_SHORT).show();
+                    PopupMessage.show(this, "Errore nel salvataggio della nota");
                     e.printStackTrace();
                 }
             }
@@ -239,11 +269,11 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if(requestCode == 1) {
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            Snackbar.make(rootFab, "Impossibile creare il PDF senza i permessi necessari", Snackbar.LENGTH_SHORT).show();
+            PopupMessage.show(this, "Impossibile creare il PDF senza i permessi necessari");
         }
     }
 
@@ -261,13 +291,13 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     }
 
     private void setFloatingButtonsAnimation() {
-        rootFab = findViewById(R.id.fab_root);
+        FloatingActionButton rootFab = findViewById(R.id.fab_root);
         penFab = findViewById(R.id.fab_pen);
         addFolderFab = findViewById(R.id.fab_add_folder);
         networkFab = findViewById(R.id.fab_network);
 
         rootFab.setOnClickListener(e -> {
-            final float padding = 200;
+            final float padding = getResources().getInteger(R.integer.translationYValue);
             float startPos = padding;
             if (!isFabMenuOpened) {
                 penFab.animate().translationY(-startPos);
@@ -336,12 +366,14 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         isFabMenuOpened = false;
     }
 
+    // metodo per cambiare cartella tramite il suo id
     private void moveToFolder(int id) {
         icons.clear();
         localDatabase.setCurrentFolder(id);
         refreshHome();
     }
 
+    // metodo per reperire i file della cartella corrente
     private void refreshHome() {
         viewAdapter.setCursor(localDatabase.getFiles());
         viewAdapter.notifyDataSetChanged();

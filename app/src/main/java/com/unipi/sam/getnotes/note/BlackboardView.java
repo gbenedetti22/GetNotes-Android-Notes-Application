@@ -26,6 +26,7 @@ import com.unipi.sam.getnotes.note.utility.Text;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class BlackboardView extends View {
     public enum TOOL {
@@ -52,10 +53,14 @@ public class BlackboardView extends View {
     private DashPathEffect dashPathEffect = new DashPathEffect(new float[]{60, 20}, 0);
     private RectF eraseZone = new RectF();
 
+
     public interface BlackboardSettings {
         int getCurrentColor();
+
         int getStrokeWidth();
+
         TOOL getCurrentTool();
+
         int getEraserSize();
     }
 
@@ -108,6 +113,7 @@ public class BlackboardView extends View {
         currentPosY = y;
     }
 
+    // Da fare...
     public void undo() {
         if (history.isEmpty()) return;
 
@@ -135,10 +141,10 @@ public class BlackboardView extends View {
         this.root = root;
     }
 
-    private void erase () {
+    private void erase() {
         for (int i = 0; i < lines.size(); i++) {
             Stroke line = lines.get(i);
-            if(line.contains(eraseZone)) {
+            if (line.contains(eraseZone)) {
                 lines.remove(i);
                 history.remove(line);
                 return;
@@ -148,7 +154,8 @@ public class BlackboardView extends View {
 
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent event) {
-        if(settings == null) throw new NullPointerException("settings must be setted before drawing");
+        if (settings == null)
+            throw new NullPointerException("settings must be setted before drawing");
 
         float x = event.getX();
         float y = event.getY();
@@ -212,6 +219,7 @@ public class BlackboardView extends View {
         int bgColor = Color.WHITE;
         viewCanvas.drawColor(bgColor);
 
+        // Se ho appena deserializzato, ricostruisco tutto e disegno
         if (restoreBlackboard) {
             restoreBlackboard = false;
             restore(canvas);
@@ -236,6 +244,7 @@ public class BlackboardView extends View {
         canvas.drawBitmap(viewBitmap, 0, 0, ditherPaint);
     }
 
+    // metodo che ricostruisce gli oggetti. Usato quando si deserializza
     private void restore(Canvas canvas) {
         for (Object o : history) {
             if (o instanceof Text) {
@@ -257,6 +266,7 @@ public class BlackboardView extends View {
         canvas.drawBitmap(viewBitmap, 0, 0, ditherPaint);
     }
 
+    // Funzione che, dato un canvas e la pagina, stampa il contenuto di page sul canvas
     public static void drawPage(Canvas canvas, SerializableNote.Page page) {
         brush.setColor(Color.BLACK);
         brush.setTextSize(70);
@@ -299,8 +309,6 @@ public class BlackboardView extends View {
     }
 
 //    private static void debugLine(Stroke line, Canvas canvas) {
-//        if(!debug) return;
-//
 //        LinkedList<Stroke.Point> points = line.getPoints();
 //        for (int i = 0; i < points.size() - 1; i++) {
 //            brush.setStrokeWidth(10);
@@ -324,6 +332,7 @@ public class BlackboardView extends View {
         }
     }
 
+    // funzione che disegna una linea (se erase è true, allora la riga sarà vuota)
     private void drawStroke(@NonNull MotionEvent event, float x, float y, boolean erase) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {

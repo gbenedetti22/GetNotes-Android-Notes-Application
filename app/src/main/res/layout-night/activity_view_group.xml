@@ -38,7 +38,7 @@
                     android:layout_height="wrap_content"
                     android:text="Group name"
                     android:textColor="@color/white"
-                    android:textSize="25dp"
+                    android:textSize="@dimen/homeTitleSize"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/add_concept_btn"
                     app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +51,7 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/appBarLayout"
         android:layout_centerHorizontal="true"

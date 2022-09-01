@@ -3,11 +3,9 @@ package com.unipi.sam.getnotes.groups;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +26,7 @@ import com.hootsuite.nachos.terminator.ChipTerminatorHandler;
 import com.unipi.sam.getnotes.R;
 import com.unipi.sam.getnotes.note.NoteActivity;
 import com.unipi.sam.getnotes.table.Group;
+import com.unipi.sam.getnotes.utility.PopupMessage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,12 +40,19 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
     private String id;
     private AlertDialog dialog;
     private String currentPosition = "root";
-    private ArrayList<Group.Concept> currentConcepts = new ArrayList<>();
     private boolean READ_MODE = false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putString("currentConcept", currentPosition);
+        outState.putSerializable("conceptHistory", history);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
         setContentView(R.layout.activity_view_group);
         id = getIntent().getStringExtra("id");
         if (id == null) {
@@ -64,7 +70,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         groupName.setText(getIntent().getStringExtra("groupName"));
         RecyclerView recyclerView = findViewById(R.id.recView);
         recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, getResources().getInteger(R.integer.homeIconsNumber)));
 
         NachoTextView chipsInput = new NachoTextView(this);
         chipsInput.addChipTerminator('\n', ChipTerminatorHandler.BEHAVIOR_CHIPIFY_ALL);
@@ -87,7 +93,13 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         }else {
             addConceptButton.setOnClickListener(v -> dialog.show());
         }
-        changeFolder("root");
+
+        if(bundle != null && !bundle.isEmpty()) {
+            currentPosition = bundle.getString("currentConcept");
+            history = (LinkedList<String>) bundle.getSerializable("conceptHistory");
+            bundle.clear();
+        }
+        openConcept(currentPosition);
     }
 
     private void createArguments(List<String> chipValues) {
@@ -103,8 +115,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
     @Override
     public void onConceptIconClick(String clickedConceptID, String parentFolderID) {
         history.add(currentPosition);
-        Log.d("history", history.toString());
-        changeFolder(clickedConceptID);
+        openConcept(clickedConceptID);
     }
 
     @Override
@@ -112,7 +123,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         FirebaseDatabase.getInstance().getReference()
                 .child("notes")
                 .child(noteId)
-                .get().addOnCompleteListener(this);
+                .get().addOnCompleteListener(this); // vedi onComplete()
     }
 
     @Override
@@ -123,16 +134,16 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
             return;
         }
 
-        changeFolder(history.pollLast());
-        Log.d("history", history.toString());
+        openConcept(history.pollLast());
     }
 
-    private void changeFolder(String folder) {
+    // smetto di ascoltare le modifiche per il concept corrente e mi sposto su un altro concept
+    private void openConcept(String folder) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         database.child("groups")
                 .child(id)
                 .child("storage")
-                .child(folder).removeEventListener(this);
+                .child(currentPosition).removeEventListener(this);
 
         Query query = database.child("groups")
                 .child(id)
@@ -140,10 +151,11 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
                 .child(folder);
 
         this.currentPosition = folder;
-        currentConcepts.clear();
         query.addValueEventListener(this);
     }
 
+    // Siccome salvo su firebase i concetti e le note usando un unica struttura dati, allora ricevo un HashMap di oggetti
+    // Questo metodo converte da oggetto a -> concetto o nota a seconda della variabile "type"
     private void convert(ArrayList<Object> files) {
         for (int i = 0; i < files.size(); i++) {
             Object file = files.get(i);
@@ -158,7 +170,6 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
                     if(concept == null) continue;
 
                     files.set(i, concept);
-                    currentConcepts.add(concept);
                 }
 
                 if (Objects.equals(map.get("type"), "NOTE")) {
@@ -168,7 +179,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         }
     }
 
-    // Funzione chiamata dalla query del metodo changeFolder
+    // Funzione chiamata dalla query del metodo changeFolder()
     @Override
     public void onDataChange(@NonNull DataSnapshot snapshot) {
         if (snapshot.exists()) {
@@ -182,6 +193,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
             return;
         }
 
+        // Ho aperto un concetto vuoto
         adapter.clear();
     }
 
@@ -195,6 +207,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
         if(task.isSuccessful()){
             DataSnapshot snapshot = task.getResult();
             if(snapshot.exists()) {
+                // Apro la nota in sola lettura
                 String content = snapshot.getValue(String.class);
                 Intent intent = new Intent(this, NoteActivity.class);
                 intent.putExtra("content", content);
@@ -202,7 +215,7 @@ public class ViewGroupActivity extends AppCompatActivity implements GroupStorage
                 intent.putExtra("name", "pippo");
                 startActivity(intent);
             }else {
-                Toast.makeText(this, "Impossibile aprire la nota", Toast.LENGTH_SHORT).show();
+                PopupMessage.showError(this, "Impossibile aprire la nota");
             }
         }
     }
