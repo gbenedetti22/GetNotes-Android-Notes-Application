@@ -15,7 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -326,7 +325,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                 intent.putExtra("name", name);
                 startActivity(intent);
             } catch (Exception e1) {
-                Toast.makeText(HomeActivity.this, "Impossibile creare una nuova nota", Toast.LENGTH_SHORT).show();
+                PopupMessage.showError(this, "Impossibile creare una nuova nota");
             }
         });
 
@@ -345,7 +344,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
                     viewAdapter.notifyDataSetChanged();
                     renameDialog.dismiss();
                 } catch (Exception ex) {
-                    Toast.makeText(HomeActivity.this, "Impossibile creare una nuova cartella", Toast.LENGTH_SHORT).show();
+                    PopupMessage.showError(this, "Impossibile creare una nuova cartella");
                     ex.printStackTrace();
                 }
             });

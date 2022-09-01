@@ -3,7 +3,6 @@ package com.unipi.sam.getnotes;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -18,15 +17,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.unipi.sam.getnotes.home.HomeActivity;
 import com.unipi.sam.getnotes.table.User;
+import com.unipi.sam.getnotes.utility.PopupMessage;
 
 public class MainActivity extends AppCompatActivity implements OnCompleteListener<DataSnapshot>, ActivityResultCallback<ActivityResult> {
     private LocalDatabase localDatabase;
@@ -42,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
         if (account != null) {
             // Se l utente esiste localmente, viene rimandato alla sua home, altrimenti le informazioni vengono
             // prese dal database e salvate
-            if(localDatabase.userExist()) {
+            if (localDatabase.userExist()) {
                 startHomeActivity();
                 return;
             }
@@ -79,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
     // metodo per reperire le informazioni sull utente dal Database
     private void login(GoogleSignInAccount account) {
         if (account.getId() == null) {
-            Toast.makeText(this, "Devi eseguire l accesso per poter usare l app", Toast.LENGTH_SHORT).show();
+            PopupMessage.showError(this, "Devi eseguire l accesso per poter usare l app");
             return;
         }
         this.account = account;
@@ -113,8 +111,8 @@ public class MainActivity extends AppCompatActivity implements OnCompleteListene
                 finish();
             }
         } else {
-            Toast.makeText(this, "Impossibile contattare il Server, riprovare più tardi", Toast.LENGTH_LONG).show();
-            if(task.getException() == null) return;
+            PopupMessage.showError(this, "Impossibile contattare il Server, riprovare più tardi");
+            if (task.getException() == null) return;
 
             task.getException().printStackTrace();
         }

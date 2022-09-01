@@ -64,7 +64,7 @@ public class GroupStorageAdapter extends RecyclerView.Adapter<GroupStorageAdapte
             case TYPE_CONCEPT: {
                 Group.Concept concept = (Group.Concept) file;
                 holder.id = concept.getId();
-                holder.label.setText(concept.getName());
+                holder.nameLabel.setText(concept.getName());
                 holder.parent_folder = currentPosition;
                 holder.itemView.setOnClickListener(v -> {
                     if(listener != null) {
@@ -78,7 +78,8 @@ public class GroupStorageAdapter extends RecyclerView.Adapter<GroupStorageAdapte
             case HomeIcon.TYPE_NOTE: {
                 Group.Note note = (Group.Note) file;
                 holder.id = note.getId();
-                holder.label.setText(note.getName());
+                holder.nameLabel.setText(note.getName());
+                holder.authorLabel.setText(note.getAuthorName());
                 holder.parent_folder = currentPosition;
                 holder.itemView.setOnClickListener(v -> {
                     if(listener != null)
@@ -123,23 +124,24 @@ public class GroupStorageAdapter extends RecyclerView.Adapter<GroupStorageAdapte
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private String id;
-        private String name;
         private int type;
         private String parent_folder;
         private final View itemView;
-        private TextView label;
+        private TextView nameLabel;
+        private TextView authorLabel;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             this.itemView = itemView;
+            this.authorLabel = itemView.findViewById(R.id.note_infoLabel);
         }
 
         private void setAsConcept() {
-            label = itemView.findViewById(R.id.concept_label);
+            nameLabel = itemView.findViewById(R.id.concept_label);
         }
 
         public void setAsNote() {
-            label = itemView.findViewById(R.id.note_label);
+            nameLabel = itemView.findViewById(R.id.note_label);
         }
 
         public String getId() {

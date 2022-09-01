@@ -1,5 +1,6 @@
 package com.unipi.sam.getnotes.groups;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -87,9 +88,15 @@ public class OnlineGroupsActivity extends AppCompatActivity implements OnlineGro
 
             HashMap<String, Object> updateMap = new HashMap<>();
             updateMap.put(String.format("users/%s/myGroups/%s", localDatabase.getUserId(), groupToJoin.getId()), groupToJoin.getInfo());
-            updateMap.put(String.format("groupsMembers/%s", groupToJoin.getId()), localDatabase.getUserPairInfo());
             FirebaseDatabase.getInstance().getReference().updateChildren(updateMap)
-                    .addOnCompleteListener(t2 -> finish());
+                    .addOnCompleteListener(t2 -> {
+                        Intent intent = new Intent(this, ViewGroupActivity.class);
+                        intent.putExtra("id", groupToJoin.getId());
+                        intent.putExtra("groupName", groupToJoin.getGroupName());
+                        intent.putExtra("op", "READ_ONLY");
+                        startActivity(intent);
+                        finish();
+                    });
         }
     }
 }

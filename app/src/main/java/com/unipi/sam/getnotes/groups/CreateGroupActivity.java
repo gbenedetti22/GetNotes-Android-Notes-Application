@@ -41,7 +41,7 @@ public class CreateGroupActivity extends AppCompatActivity {
                 return;
             }
 
-            Group g = new Group(localDatabase.getUserId(), localDatabase.getUserName(), groupName);
+            Group g = new Group(localDatabase.getUserId(), localDatabase.getUsername(), groupName);
 
             for (int i = 0; i < chipsInput.getChipValues().size(); i++) {
                 g.addConcept(new Group.Concept(chipsInput.getChipValues().get(i)));

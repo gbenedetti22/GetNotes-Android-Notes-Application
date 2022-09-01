@@ -26,9 +26,19 @@
             android:layout_below="@+id/note_image"
             android:layout_centerHorizontal="true"
             android:gravity="center"
-            android:textSize="@dimen/textSize"
             android:text="Reti"
-            android:textColor="@color/black" />
+            android:textColor="@color/black"
+            android:textSize="@dimen/textSize" />
+
+        <TextView
+            android:id="@+id/note_infoLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/note_label"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:textColor="@color/materialGrey"
+            android:textSize="@dimen/textSize" />
 
     </RelativeLayout>
 

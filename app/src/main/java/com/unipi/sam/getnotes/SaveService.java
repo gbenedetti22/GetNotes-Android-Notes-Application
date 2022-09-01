@@ -7,8 +7,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -71,7 +69,7 @@ public class SaveService extends Service {
     }
 
     private SerializableNote pollNote() {
-        if(set.isEmpty()) return null;
+        if (set.isEmpty()) return null;
 
         SerializableNote note = set.iterator().next();
         set.remove(note);
@@ -114,14 +112,13 @@ public class SaveService extends Service {
     }
 
     private void commit(@Nullable SerializableNote note) {
-        if(note == null) return;
+        if (note == null) return;
         try {
             currentSavingNote = note;
 //            Thread.sleep(3000);
             String serializedNote = serialize(note);
             localDatabase.updateNoteContent(note.getId(), serializedNote);
         } catch (Exception e) {
-            Toast.makeText(this, "Errore nel salvataggio della nota", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         } finally {
             currentSavingNote = null;

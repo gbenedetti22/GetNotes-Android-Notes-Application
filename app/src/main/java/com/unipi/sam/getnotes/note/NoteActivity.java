@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -77,7 +76,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     // in questo caso la cache non è stata deallocata e quindi basta rimettere l adapter al suo posto
     @Override
     protected void onRestart() {
-        if(viewPager.getAdapter() == null) {
+        if (viewPager.getAdapter() == null) {
             viewPager.setAdapter(adapter);
             viewPager.setCurrentItem(localDatabase.getInt("currentPage", 0), false);
         }
@@ -230,7 +229,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     // Se content non è null, allora viene deserializzato e ripristinata la nota
     // Se bundle non è null, content viene ignorato e viene ripristinata la nota dalla cache locale (caso in cui lo schermo viene semplicemente girato per esempio)
     private void load(@Nullable String content, Bundle bundle) {
-        if(bundle != null && !bundle.isEmpty()) {
+        if (bundle != null && !bundle.isEmpty()) {
             restoreFrom(bundle);
             return;
         }
@@ -250,7 +249,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
                 viewPager.setCurrentItem(serializableNote.getCurrentPageIndex(), false);
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(this, "Impossibile ricreare la nota", Toast.LENGTH_SHORT).show();
+                PopupMessage.showError(this, "Impossibile ricreare la nota");
             }
         } else {
             adapter.addPage();
@@ -261,7 +260,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     }
 
     private void restoreFrom(Bundle bundle) {
-        if(bundle.isEmpty()) return;
+        if (bundle.isEmpty()) return;
 
         adapter.restoreState(bundle.getParcelable("adapter"));
         final int currentPage = localDatabase.getInt("currentPage", 0);
@@ -270,7 +269,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         pages.refresh(0, totalPages);
 
         adapter.notifyItemRangeChanged(0, totalPages);
-        viewPager.post(()-> {
+        viewPager.post(() -> {
             viewPager.setCurrentItem(currentPage, false);
             setCurrentPageText(currentPage, totalPages - 1);
         });
@@ -298,7 +297,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     }
 
     private void setTotalPage(int nPages) {
-        if(pageNumberLabel == null) return;
+        if (pageNumberLabel == null) return;
 
         nPages = Math.max(0, nPages);
 
@@ -314,7 +313,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     }
 
     private void setCurrentPageText(int currentPage) {
-        if(pageNumberLabel == null) return;
+        if (pageNumberLabel == null) return;
 
         currentPage = Math.max(0, currentPage);
 
@@ -330,7 +329,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
     }
 
     private void setCurrentPageText(int currentPage, int totalPages) {
-        if(pageNumberLabel == null) return;
+        if (pageNumberLabel == null) return;
         setTotalPage(totalPages);
         setCurrentPageText(currentPage);
     }
@@ -388,7 +387,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
 
     // Metodo per salvare una nota in modo permanente. Il salvataggio è asincrono
     public void save() {
-        if(noteID == -1) return;
+        if (noteID == -1) return;
 
         SerializableNote note = new SerializableNote(noteID, pages.size(), viewPager.getCurrentItem());
 
@@ -426,7 +425,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
             Group.Concept c = (Group.Concept) data.getSerializableExtra("choosedConcept");
             ArrayList<Object> conceptFiles = (ArrayList<Object>) data.getSerializableExtra("conceptFiles");
 
-            Group.Note note = new Group.Note(noteName);
+            Group.Note note = new Group.Note(localDatabase.getUsername(), noteName);
             conceptFiles.add(note);
 
             // nel nodo groups/idGruppo/storage/idConcept inserisco solo un puntatore alla nota
@@ -444,7 +443,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
         if (task.isSuccessful()) {
             PopupMessage.show(this, "Nota condivisa con successo!");
         } else
-            PopupMessage.show(this, "Errore durante la condivisione.. riprova più tardi");
+            PopupMessage.showError(this, "Errore durante la condivisione.. riprova più tardi");
     }
 
     // Callbacks per indicare alla cachelist come ricreare gli elementi non serializzabili
@@ -455,7 +454,7 @@ public class NoteActivity extends AppCompatActivity implements StylusStyleDialog
 
     @Override
     public BlackboardFragment getElement(Serializable e) {
-        if(e == null) return null;
+        if (e == null) return null;
 
         SerializableNote.Page page = (SerializableNote.Page) e;
         BlackboardFragment pageFragment = new BlackboardFragment(this);

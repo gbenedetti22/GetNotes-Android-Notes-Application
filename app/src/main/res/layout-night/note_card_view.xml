@@ -31,6 +31,16 @@
             android:text="Reti"
             android:textColor="@color/white" />
 
+        <TextView
+            android:id="@+id/note_infoLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/note_label"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/textSize" />
+
     </RelativeLayout>
 
 </com.google.android.material.card.MaterialCardView>

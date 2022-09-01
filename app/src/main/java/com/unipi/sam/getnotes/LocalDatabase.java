@@ -97,9 +97,6 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     public void saveCurrentEraserType(BlackboardView.TOOL eraser) {
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putString("eraser-type", eraser.name());
-//        editor.apply();
         save("eraser-type", eraser.name());
     }
 
@@ -109,9 +106,6 @@ public class LocalDatabase extends SQLiteOpenHelper {
     }
 
     public void saveEraserSize(int value) {
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putInt("eraser", value);
-//        editor.apply();
         save("eraser", value);
     }
 
@@ -152,9 +146,6 @@ public class LocalDatabase extends SQLiteOpenHelper {
 
     public void saveStrokeWidth(int strokeWidth) {
         save("stroke", strokeWidth);
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putInt("stroke", strokeWidth);
-//        editor.apply();
     }
 
     public int getStrokeWidth() {
@@ -167,9 +158,6 @@ public class LocalDatabase extends SQLiteOpenHelper {
 
     public void saveColor(int color) {
         save("color", color);
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putInt("color", color);
-//        editor.apply();
     }
 
     public BlackboardView.TOOL getCurrentInstrument() {
@@ -179,19 +167,11 @@ public class LocalDatabase extends SQLiteOpenHelper {
 
     public void saveCurrentInstrument(BlackboardView.TOOL tool) {
         save("tool", tool.name());
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putString("tool", tool.name());
-//        editor.apply();
     }
 
     public void setUser(@NonNull User u) {
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putString("id", u.getId());
-//        editor.putString("name", u.getName());
-//        editor.apply();
-
         save("id", u.getId());
-        save("name", u.getId());
+        save("name", u.getName());
     }
 
     public String getUserId() {
@@ -206,7 +186,7 @@ public class LocalDatabase extends SQLiteOpenHelper {
         return info;
     }
 
-    public String getUserName() {
+    public String getUsername() {
         return name;
     }
 

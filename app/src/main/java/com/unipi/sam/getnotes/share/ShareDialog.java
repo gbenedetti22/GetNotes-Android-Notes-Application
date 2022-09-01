@@ -35,9 +35,9 @@ import java.util.Objects;
 
 public class ShareDialog extends DialogFragment implements DialogInterface.OnClickListener, OnCompleteListener<DataSnapshot>, TreeNode.TreeNodeClickListener {
     private Group.Info info;
-    private ConceptTreeViewHolder selectedHolder;
+    private ConceptTreeViewHolder selectedHolder; // quando l utente clicca sul concept per evidenziarlo, viene settato questo
     private ConstraintLayout layout;
-    private HashMap<String, ArrayList<Object>> storage;
+    private HashMap<String, ArrayList<Object>> storage = new HashMap<>();
 
     public interface ShareDialogListener {
         void onGroupChoosed(Group.Info info, Group.Concept g, ArrayList<Object> conceptFiles);
@@ -89,6 +89,7 @@ public class ShareDialog extends DialogFragment implements DialogInterface.OnCli
         switch (which) {
             case DialogInterface.BUTTON_POSITIVE: {
                 if(listener != null) {
+                    // l utente non ha selezionato nulla
                     if (selectedHolder == null) {
                         listener.onGroupChoosed(info, null, storage.get("root"));
                         return;

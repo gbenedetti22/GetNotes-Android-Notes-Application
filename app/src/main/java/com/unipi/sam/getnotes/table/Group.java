@@ -3,14 +3,10 @@ package com.unipi.sam.getnotes.table;
 import androidx.annotation.NonNull;
 
 import com.google.firebase.database.Exclude;
-import com.unipi.sam.getnotes.LocalDatabase;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -138,6 +134,7 @@ public class Group {
             return Objects.hash(id);
         }
 
+        @NonNull
         @Override
         public String toString() {
             return "Concept{" +
@@ -149,23 +146,24 @@ public class Group {
     public static class Note implements Serializable{
         private String id;
         private String name;
+        private String authorName;
         private OBJECTS type = OBJECTS.NOTE;
 
         public Note() {
         }
 
-        public Note(String id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public Note(String noteName) {
+        public Note(String authorName, String name) {
             this.id = UUID.randomUUID().toString();
-            this.name = noteName;
+            this.authorName = authorName;
+            this.name = name;
         }
 
         public String getId() {
             return id;
+        }
+
+        public String getAuthorName() {
+            return authorName;
         }
 
         public String getName() {
@@ -180,6 +178,7 @@ public class Group {
             Note n = new Note();
             n.id = (String) map.get("id");
             n.name = (String) map.get("name");
+            n.authorName = (String) map.get("authorName");
             return n;
         }
 
