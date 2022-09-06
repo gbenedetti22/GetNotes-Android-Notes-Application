@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -57,6 +59,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     private String currentFolderName = "";
     private ProgressDialog progressDialog; // dialog usato come "attesa" -> se l utente tenta di aprire una nota che è in corso di salvataggio, viene mostrato
     private RecyclerView recyclerView;
+    private FloatingActionButton rootFab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -290,7 +293,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
     }
 
     private void setFloatingButtonsAnimation() {
-        FloatingActionButton rootFab = findViewById(R.id.fab_root);
+        rootFab = findViewById(R.id.fab_root);
         penFab = findViewById(R.id.fab_pen);
         addFolderFab = findViewById(R.id.fab_add_folder);
         networkFab = findViewById(R.id.fab_network);
@@ -298,6 +301,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         rootFab.setOnClickListener(e -> {
             final float padding = getResources().getInteger(R.integer.translationYValue);
             float startPos = padding;
+            rootFab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_close));
             if (!isFabMenuOpened) {
                 penFab.animate().translationY(-startPos);
                 startPos += padding;
@@ -363,6 +367,7 @@ public class HomeActivity extends AppCompatActivity implements IconsViewAdapter.
         addFolderFab.animate().translationY(0);
         networkFab.animate().translationY(0);
         isFabMenuOpened = false;
+        rootFab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.add_icon));
     }
 
     // metodo per cambiare cartella tramite il suo id
